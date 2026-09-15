@@ -1,0 +1,61 @@
+name: quality
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18.6-alpine
+        env:
+          POSTGRES_USER: toem_here
+          POSTGRES_PASSWORD: ci-only-password
+          POSTGRES_DB: toem_here_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U toem_here -d toem_here_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    defaults:
+      run:
+        working-directory: services/api
+    env:
+      TEST_DATABASE_URL: postgres://toem_here:ci-only-password@localhost:5432/toem_here_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version: 1.27.1
+          cache-dependency-path: services/api/go.sum
+      - name: Formatting
+        run: test -z "$(gofmt -l .)"
+      - name: Vet
+        run: go vet ./...
+      - name: Test with PostgreSQL and race detector
+        run: go test -race -count=1 ./...
+      - name: Vulnerability scan
+        run: go run golang.org/x/vuln/cmd/govulncheck@v1.8.0 ./...
+  mobile:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24.3.0
+          cache: npm
+          cache-dependency-path: apps/mobile/package-lock.json
+      - run: npm ci
+      - run: npm test
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npx expo install --check
+      - run: npx --yes expo-doctor@1.20.4
+      - run: npm audit --audit-level=high
+      - name: Type-check shared contracts
+        run: ./node_modules/.bin/tsc -p ../../packages/contracts/tsconfig.json

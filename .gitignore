@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+.expo/
+coverage/
+*.log
+
+# Local configuration and secrets
+.env
+.env.*
+!.env.example
+apps/mobile/.env
+apps/mobile/.env.*
+!apps/mobile/.env.example
+
+# Builds and editors
+dist/
+bin/
+.DS_Store
+.idea/
+.vscode/
+
+# Local database artifacts
+infra/docker/data/

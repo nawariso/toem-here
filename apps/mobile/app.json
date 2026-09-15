@@ -1,0 +1,14 @@
+{
+  "expo": {
+    "name": "TOEM HERE",
+    "slug": "toem-here",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "toemhere",
+    "userInterfaceStyle": "light",
+    "plugins": ["expo-router", ["expo-secure-store", { "configureAndroidBackup": true }]],
+    "ios": { "supportsTablet": true, "bundleIdentifier": "com.toemhere.mobile", "config": { "usesNonExemptEncryption": false } },
+    "android": { "package": "com.toemhere.mobile" },
+    "web": { "bundler": "metro" }
+  }
+}
