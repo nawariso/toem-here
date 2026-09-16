@@ -4,7 +4,7 @@ Requirement 001 foundation for a community monitor-lizard application. This repo
 
 ## Architecture and cost
 
-- Expo SDK 57.0.23 / React Native 0.86.3 mobile app with Expo Router and secure Supabase email-OTP sessions.
+- Expo SDK 57.0.23 / React Native 0.86.3 / React 19.2.3 mobile app with Expo Router and secure Supabase email-OTP sessions.
 - Go 1.27.1 modular-monolith API. Domain and application layers do not depend on Supabase or pgx.
 - PostgreSQL 18.6 as the system of record, run locally with Docker Compose.
 - Supabase Auth Free Tier as the initial external identity provider.
@@ -19,12 +19,12 @@ Install stable versions:
 - Git
 - Docker Desktop / Docker Engine with Compose v2+
 - Go 1.27.1
-- Node.js 24.3+ LTS (Node 25 is intentionally unsupported)
-- npm 11+
+- Node.js 24.3.0 exactly (`.nvmrc` and `.node-version`)
+- npm 11.4.2 exactly (`packageManager`, `devEngines`, and `apps/mobile/.npmrc`)
 - Expo Go or an Android/iOS simulator
 - A free Supabase project with asymmetric JWT signing keys
 
-Pinned product versions are in `services/api/go.mod`, `apps/mobile/package.json`, and `apps/mobile/package-lock.json`.
+Pinned product versions are in `services/api/go.mod`, `apps/mobile/package.json`, and `apps/mobile/package-lock.json`. Use `nvm use` (or an equivalent version manager) from the repository root before running npm. npm rejects a different Node/npm toolchain so a fresh developer cannot silently regenerate a materially different lockfile. The lockfile is generated and checked in CI's exact Node 24.3.0 / npm 11.4.2 environment.
 
 ## 1. Clone and configure
 
@@ -108,7 +108,7 @@ npm ci
 npm start
 ```
 
-Scan the QR code with Expo Go, or press `a`/`i` for a configured simulator. Expected first launch: Splash → guest Home. Select **Create Your Hia Passport**, enter email, then the OTP. First login bootstraps one internal user and routes to Passport Setup; enter username and display name. Profile then shows the internal user and USER role. Logout calls Supabase local sign-out, clears its SecureStore-backed session, and returns to guest Home.
+Scan the QR code with Expo Go, or press `a`/`i` for a configured simulator. Expected first launch: Splash → guest Home. Select **Create Your Hia Passport**, enter email, then the OTP. First login bootstraps one internal user and routes to Passport Setup; enter username and display name. Profile then shows the internal user and USER role. Logout calls Supabase local sign-out, clears its SecureStore-backed session, and returns to guest Home. Supabase token auto-refresh starts only while React Native reports the app as active; backgrounding stops refresh, and provider unmount removes the AppState listener.
 
 ## 7. Run checks
 
@@ -168,7 +168,7 @@ See `packages/contracts/openapi.yaml`. Errors always use:
 - Client claims do not authorize internal user IDs or roles.
 - SQL is parameterized and identity creation is one transaction.
 - Logs contain request ID, method, path, status, and duration, but not JWT, OTP, email, credentials, or precise location.
-- React 19.2.8 is deliberately pinned above Expo's older 19.2.3 recommendation because it satisfies Expo Router's `react-server-dom-webpack@~19.2.4` peer range while staying compatible with React Native 0.86.3. `expo.install.exclude` records this deliberate validation exception for React/React DOM only; all other Expo dependency checks remain active and `npx expo-doctor` passes 21/21.
+- React and React DOM are pinned to Expo SDK 57's supported 19.2.3 baseline. Requirement 001 does not use React Server Components, so `react-server-dom-webpack` is not a direct dependency. React and React DOM have no `expo.install.exclude` exception; `npx expo install --check` validates them normally.
 - `govulncheck` reports **no vulnerabilities**. `pgx` is pinned to v5.9.2 and `golang.org/x/text` to v0.39.0 specifically to clear GO-2026-5004 (SQL injection via dollar-quoted placeholder confusion) and GO-2026-5970.
 - `npm audit --audit-level=high` passes. Thirteen **moderate** advisories remain inside Expo's own build toolchain (`@expo/cli` → `xcode` → `uuid`, and `expo-router` → `query-string` → `decode-uri-component`). `npm audit fix --force` "resolves" them by downgrading to Expo 46 / expo-router 5, which would abandon the SDK 57 baseline, so they are accepted and gated at `high` instead. They affect developer tooling, not the shipped app runtime.
 

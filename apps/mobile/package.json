@@ -3,8 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "main": "expo-router/entry",
-  "engines": { "node": ">=24 <25" },
-  "expo": { "install": { "exclude": ["react", "react-dom"] } },
+  "engines": { "node": "24.3.0", "npm": "11.4.2" },
+  "packageManager": "npm@11.4.2",
+  "devEngines": {
+    "runtime": { "name": "node", "version": "24.3.0", "onFail": "error" },
+    "packageManager": { "name": "npm", "version": "11.4.2", "onFail": "error" }
+  },
   "scripts": {
     "start": "expo start",
     "typecheck": "tsc --noEmit",
@@ -20,8 +24,8 @@
     "expo-linking": "57.0.10",
     "expo-router": "57.0.21",
     "expo-secure-store": "57.0.4",
-    "react": "19.2.8",
-    "react-dom": "19.2.8",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
     "react-native": "0.86.3",
     "react-native-gesture-handler": "2.32.0",
     "react-native-reanimated": "4.5.1",
@@ -29,7 +33,6 @@
     "react-native-screens": "4.26.0",
     "react-native-web": "0.21.2",
     "react-native-worklets": "0.10.1",
-    "react-server-dom-webpack": "19.2.8",
     "react-native-url-polyfill": "4.0.0"
   },
   "devDependencies": {

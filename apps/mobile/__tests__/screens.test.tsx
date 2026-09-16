@@ -30,6 +30,7 @@ jest.mock('../src/auth/controller', () => {
 jest.mock('../src/auth/supabase-adapter', () => ({
   createSupabaseClient: () => ({}),
   createSupabaseAuthProvider: () => ({}),
+  manageSupabaseAutoRefresh: () => jest.fn(),
 }));
 jest.mock('../src/api/client', () => ({ createApiClient: () => ({}) }));
 

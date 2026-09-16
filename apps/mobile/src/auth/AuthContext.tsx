@@ -1,7 +1,11 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react';
 import { createApiClient } from '../api/client';
 import { createAuthController, type ProfileInput } from './controller';
-import { createSupabaseAuthProvider, createSupabaseClient } from './supabase-adapter';
+import {
+  createSupabaseAuthProvider,
+  createSupabaseClient,
+  manageSupabaseAutoRefresh,
+} from './supabase-adapter';
 import { initialAuthState, reduceAuth, type AuthState } from './state';
 
 const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
@@ -26,14 +30,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
 
   // Built once so a misconfigured build degrades to GUEST instead of crashing.
-  const controller = useMemo(() => {
+  const authServices = useMemo(() => {
     try {
       const client = createSupabaseClient(supabaseUrl, supabaseKey);
-      return createAuthController(createSupabaseAuthProvider(client), createApiClient(apiUrl));
+      return {
+        client,
+        controller: createAuthController(createSupabaseAuthProvider(client), createApiClient(apiUrl)),
+      };
     } catch {
       return null;
     }
   }, []);
+  const controller = authServices?.controller ?? null;
+
+  useEffect(() => {
+    if (!authServices) return;
+    return manageSupabaseAutoRefresh(authServices.client);
+  }, [authServices]);
 
   useEffect(() => {
     let active = true;
