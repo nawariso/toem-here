@@ -4,5 +4,9 @@
     "strict": true,
     "noUncheckedIndexedAccess": true
   },
-  "include": ["app/**/*.tsx", "src/**/*.ts", "src/**/*.tsx", "expo-env.d.ts"]
+  "include": [
+    "app/**/*.tsx",
+    "src/**/*.ts",
+    "src/**/*.tsx"
+  ]
 }
