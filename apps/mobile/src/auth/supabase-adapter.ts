@@ -67,6 +67,7 @@ export function manageSupabaseAutoRefresh(
 
 export function createSupabaseAuthProvider(client: SupabaseClient): AuthProvider {
   return {
+    kind: 'supabase',
     async getAccessToken() { const { data, error } = await client.auth.getSession(); if (error) throw error; return data.session?.access_token ?? null; },
     async requestEmailOtp(email) { const { error } = await client.auth.signInWithOtp({ email, options: { shouldCreateUser: true } }); if (error) throw error; },
     async verifyEmailOtp(email, otp) { const { data, error } = await client.auth.verifyOtp({ email, token: otp, type: 'email' }); if (error) throw error; if (!data.session?.access_token) throw new Error('Authentication did not return a session'); return data.session.access_token; },

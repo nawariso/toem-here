@@ -18,3 +18,6 @@ Developers configure one free Supabase project and run data services locally. CI
 
 ## Exit Strategy
 Adopt paid services only when measured reliability, capacity, or team needs justify them. Put provider additions behind existing identity, persistence, and telemetry ports and record a new ADR.
+
+## Amendment — Requirement 001-B
+Local development no longer requires any hosted service. With `AUTH_MODE=local` the mandatory development runtime is local Docker PostgreSQL, the local Go API, and local Expo tooling ($0/month, no accounts). Supabase Auth Free Tier remains the selected identity provider for the Integration & Pilot Hardening milestone. See ADR-005.

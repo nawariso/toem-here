@@ -1,6 +1,10 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useReducer, useState } from 'react';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { createApiClient } from '../api/client';
-import { createAuthController, type ProfileInput } from './controller';
+import { readPublicEnv, resolveAuthConfig, type AuthConfig, type AuthMode } from '../config/auth-mode';
+import { createAuthController, type AuthController, type ProfileInput } from './controller';
+import { createLocalDevAuthProvider } from './local-dev-adapter';
+import { secureSessionStorage } from './secure-storage';
 import {
   createSupabaseAuthProvider,
   createSupabaseClient,
@@ -8,35 +12,43 @@ import {
 } from './supabase-adapter';
 import { initialAuthState, reduceAuth, type AuthState } from './state';
 
-const supabaseUrl = process.env.EXPO_PUBLIC_SUPABASE_URL ?? '';
-const supabaseKey = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY ?? '';
-const apiUrl = process.env.EXPO_PUBLIC_API_URL ?? '';
-
 const CONFIG_ERROR = 'App configuration is incomplete';
 
 type ContextValue = {
   state: AuthState;
   error: string | null;
+  /** The resolved auth mode, or null when configuration is invalid. */
+  authMode: AuthMode | null;
   requestOtp(email: string): Promise<void>;
   verifyOtp(email: string, otp: string): Promise<void>;
+  signInDevelopmentUser(): Promise<void>;
   updateProfile(input: ProfileInput): Promise<void>;
   signOut(): Promise<void>;
 };
 
+type AuthServices = { controller: AuthController; supabase: SupabaseClient | null };
+
 const AuthContext = createContext<ContextValue | null>(null);
+
+// Exactly one adapter is constructed for a resolved configuration. Local mode
+// never touches Supabase; Supabase mode never constructs the local adapter.
+function createAuthServices(config: AuthConfig): AuthServices {
+  const api = createApiClient(config.apiUrl);
+  if (config.mode === 'local') {
+    return { controller: createAuthController(createLocalDevAuthProvider(secureSessionStorage), api), supabase: null };
+  }
+  const client = createSupabaseClient(config.supabaseUrl, config.supabasePublishableKey);
+  return { controller: createAuthController(createSupabaseAuthProvider(client), api), supabase: client };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(reduceAuth, initialAuthState);
   const [error, setError] = useState<string | null>(null);
 
   // Built once so a misconfigured build degrades to GUEST instead of crashing.
-  const authServices = useMemo(() => {
+  const authServices = useMemo<AuthServices | null>(() => {
     try {
-      const client = createSupabaseClient(supabaseUrl, supabaseKey);
-      return {
-        client,
-        controller: createAuthController(createSupabaseAuthProvider(client), createApiClient(apiUrl)),
-      };
+      return createAuthServices(resolveAuthConfig(readPublicEnv(), __DEV__));
     } catch {
       return null;
     }
@@ -44,8 +56,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const controller = authServices?.controller ?? null;
 
   useEffect(() => {
-    if (!authServices) return;
-    return manageSupabaseAutoRefresh(authServices.client);
+    if (!authServices?.supabase) return;
+    return manageSupabaseAutoRefresh(authServices.supabase);
   }, [authServices]);
 
   useEffect(() => {
@@ -88,6 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     () => ({
       state,
       error,
+      authMode: controller?.mode ?? null,
       requestOtp: (email) =>
         run(async () => {
           if (!controller) throw new Error(CONFIG_ERROR);
@@ -97,6 +110,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         run(async () => {
           if (!controller) throw new Error(CONFIG_ERROR);
           const user = await controller.verifyOtp(email, otp);
+          dispatch({ type: 'BOOTSTRAP_SUCCEEDED', user });
+        }),
+      signInDevelopmentUser: () =>
+        run(async () => {
+          if (!controller) throw new Error(CONFIG_ERROR);
+          const user = await controller.signInDevelopmentUser();
           dispatch({ type: 'BOOTSTRAP_SUCCEEDED', user });
         }),
       updateProfile: (input) =>

@@ -1,14 +1,21 @@
 # TOEM HERE
 
-Requirement 001 foundation for a community monitor-lizard application. This repository currently contains only the mobile shell, identity/authentication boundary, internal-user API, and PostgreSQL persistence. Wildlife features are intentionally absent.
+Requirement 001 foundation (plus Requirement 001-B local development mode) for a community monitor-lizard application. This repository currently contains only the mobile shell, identity/authentication boundary, internal-user API, and PostgreSQL persistence. Wildlife features are intentionally absent.
+
+A fresh clone runs the mobile app, Go API, PostgreSQL, and authentication **without a Supabase account, email provider, OTP, or any cloud account**, using Controlled Local Development Mode (`AUTH_MODE=local`).
+
+> **LOCAL AUTH IS DEVELOPMENT ONLY. IT MUST NEVER BE ENABLED IN PRODUCTION.**
+> `APP_ENV=production` + `AUTH_MODE=local` is a fatal startup error, and release mobile builds refuse local mode.
+
+Status: Requirement 001 core foundation accepted. Supabase Auth / Email OTP / real provider JWT are **DEFERRED TO INTEGRATION & PILOT HARDENING** — not tested end to end. See `docs/requirements/001B-local-development-mode.md`.
 
 ## Architecture and cost
 
-- Expo SDK 57.0.23 / React Native 0.86.3 / React 19.2.3 mobile app with Expo Router and secure Supabase email-OTP sessions.
+- Expo SDK 57 / React Native 0.86.3 / React 19.2.3 mobile app with Expo Router. Auth goes through an `AuthProvider` adapter: `LocalDevAuthProvider` (development) or `SupabaseAuthProvider` (email OTP, deferred).
 - Go 1.27.1 modular-monolith API. Domain and application layers do not depend on Supabase or pgx.
 - PostgreSQL 18.6 as the system of record, run locally with Docker Compose.
-- Supabase Auth Free Tier as the initial external identity provider.
-- Mandatory infrastructure cost: **$0/month**.
+- API identity goes through `IdentityVerifier`: `LocalDevVerifier` (`AUTH_MODE=local`) or the Supabase JWKS/JWT verifier (`AUTH_MODE=supabase`). Supabase Auth Free Tier remains the selected provider for Integration & Pilot Hardening.
+- Mandatory infrastructure cost: **$0/month**. Local development has no external runtime dependency.
 
 See `docs/architecture/foundation.md` and `docs/adr/`.
 
@@ -22,7 +29,7 @@ Install stable versions:
 - Node.js 24.3.0 exactly (`.nvmrc` and `.node-version`)
 - npm 11.4.2 exactly (`packageManager`, `devEngines`, and `apps/mobile/.npmrc`)
 - Expo Go or an Android/iOS simulator
-- A free Supabase project with asymmetric JWT signing keys
+- (Supabase mode only, deferred) a free Supabase project with asymmetric JWT signing keys
 
 Pinned product versions are in `services/api/go.mod`, `apps/mobile/package.json`, and `apps/mobile/package-lock.json`. Use `nvm use` (or an equivalent version manager) from the repository root before running npm. npm rejects a different Node/npm toolchain so a fresh developer cannot silently regenerate a materially different lockfile. The lockfile is generated and checked in CI's exact Node 24.3.0 / npm 11.4.2 environment.
 
@@ -36,16 +43,26 @@ cp .env.example .env.local
 
 Edit `.env.local`:
 
-1. Replace the local database password placeholder.
-2. In Supabase Dashboard, copy Project URL and the **publishable** key (never a secret/service-role key) into the `EXPO_PUBLIC_` fields.
-3. Set `AUTH_ISSUER` to `https://PROJECT_REF.supabase.co/auth/v1`.
-4. Set `AUTH_JWKS_URL` to `https://PROJECT_REF.supabase.co/auth/v1/.well-known/jwks.json`.
-5. Keep `AUTH_AUDIENCE=authenticated` unless the Supabase JWT configuration explicitly uses a different audience.
-6. Set `EXPO_PUBLIC_API_URL` to this computer's LAN URL (for example `http://192.168.1.20:8080`) when testing on a physical phone. A phone cannot reach the computer through its own `localhost`.
+1. Replace the local database password placeholder in both `POSTGRES_PASSWORD` and `DATABASE_URL`.
+2. Keep `APP_ENV=development`, `AUTH_MODE=local`, `EXPO_PUBLIC_APP_ENV=development`, `EXPO_PUBLIC_AUTH_MODE=local`.
+3. Set `EXPO_PUBLIC_API_URL` to this computer's LAN URL (for example `http://192.168.1.20:8080`) when testing on a physical phone. A phone cannot reach the computer through its own `localhost`.
 
-`.env.local` is ignored by Git. `.env.example` contains placeholders only.
+No Supabase value is needed in local mode. `.env.local` is ignored by Git. `.env.example` contains placeholders only.
 
-## 2. Configure Supabase email OTP
+### Authentication modes
+
+| `APP_ENV` | `AUTH_MODE` | Result |
+| --- | --- | --- |
+| `development` / `test` | `local` | Starts. Deterministic dev user `LOCAL_DEV/developer-001`. No Supabase config read. |
+| any | `supabase` | Starts only when `AUTH_ISSUER`, `AUTH_AUDIENCE`, `AUTH_JWKS_URL` are set (mobile also needs `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`). |
+| `production` | `local` | **Fatal startup error.** |
+| missing / unknown | missing / unknown | Fatal startup error. No defaults, no fallback. |
+
+The local credential is a fixed, non-sensitive development string. The API still verifies it through `IdentityVerifier` and resolves the internal user through the normal bootstrap; the client never sends a user ID, role, or status. A Supabase-mode API rejects it.
+
+## 2. (Deferred) Configure Supabase email OTP
+
+Skip this section during core development. It is required only for `AUTH_MODE=supabase`, which is deferred to the Integration & Pilot Hardening milestone. Set `AUTH_MODE=supabase` / `EXPO_PUBLIC_AUTH_MODE=supabase`, uncomment the Supabase block in `.env.local`, set `AUTH_ISSUER` to `https://PROJECT_REF.supabase.co/auth/v1`, `AUTH_JWKS_URL` to `https://PROJECT_REF.supabase.co/auth/v1/.well-known/jwks.json`, keep `AUTH_AUDIENCE=authenticated`, and copy the Project URL and **publishable** key (never a secret/service-role key) into the `EXPO_PUBLIC_SUPABASE_*` fields.
 
 In the free Supabase project:
 
@@ -96,7 +113,13 @@ curl http://localhost:8080/health
 curl http://localhost:8080/ready
 ```
 
-Both return HTTP 200 when the process and database are healthy. Startup fails immediately if critical database/auth configuration is missing.
+Both return HTTP 200 when the process and database are healthy. Startup fails immediately if critical database/auth configuration is missing. In local mode the API logs a `local_development_auth_enabled` warning at startup.
+
+Exercise local auth from the terminal (development only):
+
+```bash
+curl -X POST -H "Authorization: Bearer toem-local-dev.developer-001" http://localhost:8080/v1/auth/bootstrap
+```
 
 ## 6. Start the mobile app
 
@@ -108,7 +131,18 @@ npm ci
 npm start
 ```
 
-Scan the QR code with Expo Go, or press `a`/`i` for a configured simulator. Expected first launch: Splash → guest Home. Select **Create Your Hia Passport**, enter email, then the OTP. First login bootstraps one internal user and routes to Passport Setup; enter username and display name. Profile then shows the internal user and USER role. Logout calls Supabase local sign-out, clears its SecureStore-backed session, and returns to guest Home. Supabase token auto-refresh starts only while React Native reports the app as active; backgrounding stops refresh, and provider unmount removes the AppState listener.
+Scan the QR code with Expo Go, or press `a`/`i` for a configured simulator.
+
+Local-auth smoke test (the development runtime acceptance test):
+
+1. Launch → Splash → guest Home.
+2. **Create Your Hia Passport** → the screen shows a `LOCAL DEVELOPMENT MODE` badge and **Continue as Dev User** (no email form).
+3. **Continue as Dev User** → `POST /v1/auth/bootstrap` creates (first time) or reuses the internal user → Passport Setup.
+4. Enter username and display name → Profile shows the internal user and USER role.
+5. **Log out** → local session cleared from SecureStore → guest Home.
+6. Repeat step 3: the same internal user is returned; no duplicate is created.
+
+In Supabase mode (deferred) the same screen shows the email/OTP form instead and never shows **Continue as Dev User**. Supabase token auto-refresh starts only while React Native reports the app as active; backgrounding stops refresh, and provider unmount removes the AppState listener.
 
 ## 7. Run checks
 
@@ -150,9 +184,9 @@ GitHub Actions runs the same gates with a real PostgreSQL 18.6 service and pinne
 
 - `GET /health`
 - `GET /ready`
-- `POST /v1/auth/bootstrap` (Bearer JWT)
-- `GET /v1/users/me` (Bearer JWT)
-- `PATCH /v1/users/me` (Bearer JWT; only `username`, `displayName`, `locale`)
+- `POST /v1/auth/bootstrap` (Bearer credential: Supabase JWT, or the local dev credential in `AUTH_MODE=local`)
+- `GET /v1/users/me` (Bearer credential)
+- `PATCH /v1/users/me` (Bearer credential; only `username`, `displayName`, `locale`)
 
 See `packages/contracts/openapi.yaml`. Errors always use:
 
@@ -162,7 +196,8 @@ See `packages/contracts/openapi.yaml`. Errors always use:
 
 ## Security notes
 
-- Supabase session data uses Expo SecureStore, never AsyncStorage.
+- Local development auth is guarded three times on the API (config load, config re-validation in `identity.FromConfig`, `NewLocalDevVerifier` constructor) and twice on mobile (`EXPO_PUBLIC_APP_ENV` allowlist and `__DEV__` bundle check). Each guard has a test, including a real-process test that `APP_ENV=production AUTH_MODE=local` exits non-zero before touching the database.
+- Supabase session data and the local development credential use Expo SecureStore, never AsyncStorage.
 - The API verifies RS256 signature, key ID, issuer, audience, expiry, issued-at validity, and subject.
 - JWKS refreshes are throttled and the key cache is TTL-bounded, so unauthenticated callers cannot turn unknown-key-id tokens into unbounded outbound fetches against the identity provider. Signing keys below a 2048-bit RSA modulus are ignored even if the JWKS endpoint offers them. Key rotation is still picked up once the cache expires.
 - Client claims do not authorize internal user IDs or roles.
@@ -174,4 +209,4 @@ See `packages/contracts/openapi.yaml`. Errors always use:
 
 ## Current limits
 
-There is no deployed API/database, production SMTP, Apple/Google/LINE login, account-deletion workflow, or wildlife functionality. A real email-OTP end-to-end run requires the developer's free Supabase project values. Account deletion must be designed with future wildlife contribution-retention semantics before public beta or store release.
+There is no deployed API/database, production SMTP, Apple/Google/LINE login, account-deletion workflow, or wildlife functionality. Supabase Auth, Email OTP, and real provider JWT verification end to end are **DEFERRED TO INTEGRATION & PILOT HARDENING** and have not been tested against a real project; they are mandatory before any public beta or Lumpini pilot. Account deletion must be designed with future wildlife contribution-retention semantics before public beta or store release.

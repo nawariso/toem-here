@@ -36,17 +36,22 @@ func main() {
 		logger.Error("database_unavailable", "error", err)
 		os.Exit(1)
 	}
-	verifier, err := identity.NewJWTVerifier(cfg.AuthIssuer, cfg.AuthAudience, cfg.AuthJWKSURL, nil)
+	verifier, err := identity.FromConfig(cfg)
 	if err != nil {
 		logger.Error("identity_verifier_invalid", "error", err)
 		os.Exit(1)
+	}
+	if cfg.AuthMode == config.AuthModeLocal {
+		logger.Warn("local_development_auth_enabled",
+			"auth_mode", cfg.AuthMode, "environment", cfg.AppEnv,
+			"notice", "LOCAL AUTH IS DEVELOPMENT ONLY AND MUST NEVER BE ENABLED IN PRODUCTION")
 	}
 	repo := persistence.NewRepository(pool)
 	users := application.NewUserService(repo)
 	handler := httptransport.NewServer(users, verifier, repo).Handler()
 	server := &http.Server{Addr: ":" + cfg.HTTPPort, Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
 	go func() {
-		logger.Info("api_started", "port", cfg.HTTPPort, "environment", cfg.AppEnv)
+		logger.Info("api_started", "port", cfg.HTTPPort, "environment", cfg.AppEnv, "auth_mode", cfg.AuthMode)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			logger.Error("api_stopped", "error", err)
 			os.Exit(1)

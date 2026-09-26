@@ -48,7 +48,13 @@ paths:
         '409': { $ref: '#/components/responses/Error' }
 components:
   securitySchemes:
-    bearerAuth: { type: http, scheme: bearer, bearerFormat: JWT }
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: >-
+        AUTH_MODE=supabase: a Supabase-issued RS256 JWT verified through JWKS.
+        AUTH_MODE=local (development/test only, never production): the fixed
+        local development credential. The server derives the user in both modes.
   schemas:
     User:
       type: object

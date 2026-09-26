@@ -19,17 +19,24 @@ jest.mock('expo-secure-store', () => ({
 
 jest.mock('../src/auth/controller', () => {
   const controller = {
+    mode: 'supabase',
     restore: jest.fn(),
     requestOtp: jest.fn(),
     verifyOtp: jest.fn(),
+    signInDevelopmentUser: jest.fn(),
     updateProfile: jest.fn(),
     signOut: jest.fn(),
   };
-  return { createAuthController: () => controller, __controller: controller };
+  // The controller reports the mode of whichever real adapter AuthContext chose.
+  const createAuthController = jest.fn((auth: { kind: string }) => {
+    controller.mode = auth.kind;
+    return controller;
+  });
+  return { createAuthController, __controller: controller };
 });
 jest.mock('../src/auth/supabase-adapter', () => ({
-  createSupabaseClient: () => ({}),
-  createSupabaseAuthProvider: () => ({}),
+  createSupabaseClient: jest.fn(() => ({})),
+  createSupabaseAuthProvider: () => ({ kind: 'supabase' }),
   manageSupabaseAutoRefresh: () => jest.fn(),
 }));
 jest.mock('../src/api/client', () => ({ createApiClient: () => ({}) }));
@@ -44,11 +51,45 @@ import Profile from '../app/profile';
 
 const replace = router.replace as unknown as jest.Mock;
 const push = router.push as unknown as jest.Mock;
-const controller = (
-  jest.requireMock('../src/auth/controller') as {
-    __controller: Record<'restore' | 'requestOtp' | 'verifyOtp' | 'updateProfile' | 'signOut', jest.Mock>;
-  }
-).__controller;
+type ControllerMock = Record<
+  'restore' | 'requestOtp' | 'verifyOtp' | 'signInDevelopmentUser' | 'updateProfile' | 'signOut',
+  jest.Mock
+> & { mode: string };
+const controllerModule = jest.requireMock('../src/auth/controller') as {
+  __controller: ControllerMock;
+  createAuthController: jest.Mock;
+};
+const controller = controllerModule.__controller;
+const createSupabaseClient = (jest.requireMock('../src/auth/supabase-adapter') as { createSupabaseClient: jest.Mock })
+  .createSupabaseClient;
+
+const PUBLIC_ENV_KEYS = [
+  'EXPO_PUBLIC_APP_ENV',
+  'EXPO_PUBLIC_AUTH_MODE',
+  'EXPO_PUBLIC_API_URL',
+  'EXPO_PUBLIC_SUPABASE_URL',
+  'EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY',
+] as const;
+
+function useEnv(values: Partial<Record<(typeof PUBLIC_ENV_KEYS)[number], string>>) {
+  for (const key of PUBLIC_ENV_KEYS) delete process.env[key];
+  Object.assign(process.env, values);
+}
+
+const SUPABASE_ENV = {
+  EXPO_PUBLIC_APP_ENV: 'production',
+  EXPO_PUBLIC_AUTH_MODE: 'supabase',
+  EXPO_PUBLIC_API_URL: 'https://api.example',
+  EXPO_PUBLIC_SUPABASE_URL: 'https://project.supabase.co',
+  EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_x',
+};
+const LOCAL_ENV = {
+  EXPO_PUBLIC_APP_ENV: 'development',
+  EXPO_PUBLIC_AUTH_MODE: 'local',
+  EXPO_PUBLIC_API_URL: 'http://192.168.1.20:8080',
+};
+const DEV_LOGIN_TEXT = /Continue as Dev User|Local Login|Developer Authentication|LOCAL DEVELOPMENT MODE/i;
+const originalDev = (globalThis as { __DEV__?: boolean }).__DEV__;
 
 const incomplete = {
   id: 'u1',
@@ -79,11 +120,19 @@ async function renderSettled(Screen: React.ComponentType): Promise<RenderResult>
 
 beforeEach(() => {
   jest.clearAllMocks();
+  (globalThis as { __DEV__?: boolean }).__DEV__ = originalDev;
+  useEnv(SUPABASE_ENV);
   controller.restore.mockResolvedValue(null);
   controller.requestOtp.mockResolvedValue(undefined);
   controller.verifyOtp.mockResolvedValue(incomplete);
+  controller.signInDevelopmentUser.mockResolvedValue(incomplete);
   controller.updateProfile.mockResolvedValue(complete);
   controller.signOut.mockResolvedValue(undefined);
+});
+
+afterAll(() => {
+  (globalThis as { __DEV__?: boolean }).__DEV__ = originalDev;
+  useEnv({});
 });
 
 describe('guest state', () => {
@@ -199,5 +248,97 @@ describe('logout navigation', () => {
 
     expect(controller.signOut).toHaveBeenCalledTimes(1);
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/home'));
+  });
+});
+
+describe('local development auth mode (Requirement 001-B)', () => {
+  beforeEach(() => useEnv(LOCAL_ENV));
+
+  it('offers Continue as Dev User, labels the mode, and hides the email OTP form', async () => {
+    const view = await renderSettled(Passport);
+    expect(view.getByText('Continue as Dev User')).toBeTruthy();
+    expect(view.getByText('LOCAL DEVELOPMENT MODE')).toBeTruthy();
+    expect(view.queryByPlaceholderText('you@example.com')).toBeNull();
+    expect(view.queryByText('Email me a code')).toBeNull();
+  });
+
+  it('never constructs a Supabase client in local mode', async () => {
+    await renderSettled(Passport);
+    expect(createSupabaseClient).not.toHaveBeenCalled();
+    expect(controllerModule.createAuthController).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'local' }),
+      expect.anything(),
+    );
+  });
+
+  it('dev login bootstraps through the API and reaches the authenticated state', async () => {
+    const view = await renderSettled(Passport);
+    await fireEvent.press(view.getByText('Continue as Dev User'));
+    expect(controller.signInDevelopmentUser).toHaveBeenCalledTimes(1);
+    expect(controller.requestOtp).not.toHaveBeenCalled();
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/passport-setup'));
+  });
+
+  it('surfaces an API failure instead of navigating', async () => {
+    controller.signInDevelopmentUser.mockRejectedValue(new Error('Network request failed'));
+    const view = await renderSettled(Passport);
+    await fireEvent.press(view.getByText('Continue as Dev User'));
+    await waitFor(() => expect(view.getByText('Network request failed')).toBeTruthy());
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('logout from a local session returns to guest Home', async () => {
+    controller.restore.mockResolvedValue(complete);
+    const view = await renderSettled(Profile);
+    await waitFor(() => expect(view.getByText('Mickey')).toBeTruthy());
+    await fireEvent.press(view.getByText('Log out'));
+    expect(controller.signOut).toHaveBeenCalledTimes(1);
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/home'));
+    // The local adapter cleared its stored session (see local-dev-adapter.test.ts),
+    // so a relaunch restores nothing and lands on guest Home.
+    controller.restore.mockResolvedValue(null);
+    const home = await renderSettled(Home);
+    expect(home.getByText('Create Your Hia Passport')).toBeTruthy();
+  });
+});
+
+describe('production UX isolation (Requirement 001-B §13)', () => {
+  const screens: [string, React.ComponentType][] = [
+    ['Splash', Splash],
+    ['Home', Home],
+    ['Passport', Passport],
+    ['PassportSetup', PassportSetup],
+    ['Profile', Profile],
+  ];
+
+  it.each(screens)('supabase-mode %s never shows development login', async (_name, Screen) => {
+    const view = await renderSettled(Screen);
+    expect(view.queryByText(DEV_LOGIN_TEXT)).toBeNull();
+  });
+
+  it('supabase mode shows the email OTP form instead', async () => {
+    const view = await renderSettled(Passport);
+    expect(view.getByText('Email me a code')).toBeTruthy();
+    expect(controllerModule.createAuthController).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'supabase' }),
+      expect.anything(),
+    );
+  });
+
+  it('production + local configuration exposes no dev login and fails closed', async () => {
+    useEnv({ ...LOCAL_ENV, EXPO_PUBLIC_APP_ENV: 'production' });
+    const view = await renderScreen(Passport);
+    await waitFor(() => expect(view.getByText('App configuration is incomplete')).toBeTruthy());
+    expect(view.queryByText(DEV_LOGIN_TEXT)).toBeNull();
+    expect(controllerModule.createAuthController).not.toHaveBeenCalled();
+  });
+
+  it('a release bundle (__DEV__=false) refuses local mode even with a development APP_ENV', async () => {
+    (globalThis as { __DEV__?: boolean }).__DEV__ = false;
+    useEnv(LOCAL_ENV);
+    const view = await renderScreen(Passport);
+    await waitFor(() => expect(view.getByText('App configuration is incomplete')).toBeTruthy());
+    expect(view.queryByText(DEV_LOGIN_TEXT)).toBeNull();
+    expect(controllerModule.createAuthController).not.toHaveBeenCalled();
   });
 });

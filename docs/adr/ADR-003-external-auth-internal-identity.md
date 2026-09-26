@@ -18,3 +18,6 @@ The API depends on public signing-key availability/cache refresh, not Supabase S
 
 ## Exit Strategy
 Add IdentityVerifier/AuthProvider adapters and auth_identity rows for new providers. Migrate providers without changing internal user IDs.
+
+## Amendment — Requirement 001-B
+Supabase Auth and Email OTP integration is DEFERRED to Integration & Pilot Hardening; it has not been tested end to end against a real project. During core development the same ports are served by explicit local development adapters selected with `AUTH_MODE=local` (see ADR-005). The decision above is unchanged: production uses Supabase-issued JWTs verified through JWKS.

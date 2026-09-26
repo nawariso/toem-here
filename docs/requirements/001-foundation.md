@@ -1,6 +1,15 @@
 # Requirement 001 — Project Bootstrap & Identity Foundation
 
-Status: Ready for implementation
+Status: CORE FOUNDATION ACCEPTED — external auth integration DEFERRED
+
+> **Amended by Requirement 001-B** (`docs/requirements/001B-local-development-mode.md`).
+>
+> | Area | Status |
+> | --- | --- |
+> | Code / architecture / CI | ACCEPTED |
+> | Supabase Auth, Email OTP, real provider JWT end to end | DEFERRED TO INTEGRATION & PILOT HARDENING (not tested, not passed) |
+>
+> The rule "development/test mode must not silently bypass token validation" now reads: development/test environments may use an explicit Local Development Identity Provider (`AUTH_MODE=local`); authentication is never silently disabled, and `APP_ENV=production` + `AUTH_MODE=local` is a fatal startup error.
 
 ## Objective
 
