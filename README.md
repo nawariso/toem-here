@@ -1,13 +1,13 @@
 # TOEM HERE
 
-Community monitor-lizard application. Requirement 001 (foundation) and 001-B (local development mode) are accepted. Requirement 002 (wildlife domain foundation: parks, zones, Hias, encounters, private encounter locations on PostgreSQL + PostGIS) is implemented on `feature/req-002-wildlife-domain` and **pending independent review**. See `docs/requirements/002-wildlife-domain-foundation.md`.
+Community monitor-lizard application. Requirement 001 (foundation) and 001-B (local development mode) are accepted. Requirement 002 (wildlife domain foundation: parks, zones, Hias, encounters, private encounter locations on PostgreSQL + PostGIS) is **accepted** and merged. See `docs/requirements/002-wildlife-domain-foundation.md`.
 
 A fresh clone runs the mobile app, Go API, PostgreSQL, and authentication **without a Supabase account, email provider, OTP, or any cloud account**, using Controlled Local Development Mode (`AUTH_MODE=local`).
 
 > **LOCAL AUTH IS DEVELOPMENT ONLY. IT MUST NEVER BE ENABLED IN PRODUCTION.**
 > `APP_ENV=production` + `AUTH_MODE=local` is a fatal startup error, and release mobile builds refuse local mode.
 
-Status: REQ-001 and REQ-001-B accepted. Native local-auth smoke on a device/emulator is **NOT RUN — deferred mandatory gate before Requirement 003**. Supabase Auth / Email OTP / real provider JWT are **DEFERRED TO INTEGRATION & PILOT HARDENING** — not tested end to end. See `docs/requirements/001B-local-development-mode.md`.
+Status: REQ-001, REQ-001-B and REQ-002 accepted. Native local-auth smoke on a device/emulator is **NOT RUN — deferred mandatory gate before Requirement 003**. Supabase Auth / Email OTP / real provider JWT are **DEFERRED TO INTEGRATION & PILOT HARDENING** — not tested end to end. See `docs/requirements/001B-local-development-mode.md`.
 
 ## Architecture and cost
 

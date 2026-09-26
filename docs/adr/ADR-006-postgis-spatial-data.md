@@ -1,6 +1,6 @@
 # ADR-006: PostGIS for Spatial Data
 
-Status: Proposed (Requirement 002 — pending independent review)
+Status: Accepted (Requirement 002, reviewed at `9e8822b`)
 
 ## Context
 

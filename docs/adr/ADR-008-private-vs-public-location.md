@@ -1,6 +1,6 @@
 # ADR-008: Private vs Public Location
 
-Status: Proposed (Requirement 002 — pending independent review)
+Status: Accepted (Requirement 002, reviewed at `9e8822b`)
 
 ## Context
 
@@ -21,6 +21,10 @@ A precise encounter location reveals where a person was at a given time and wher
 ## Consequences
 
 A mandatory E2E test stores a GPS point, confirms it is in the database, and asserts that no response (create, patch, get, list, submit, parks, zones, hias, validation error) and no log line contains it.
+
+## Boundary
+
+`encounter_location_point()` is the controlled application/database write path. Privileged arbitrary raw SQL is outside this invariant; production database permissions and access controls must prevent uncontrolled wildlife-location writes (hardening item recorded in Requirement 002).
 
 ## Exit Strategy
 

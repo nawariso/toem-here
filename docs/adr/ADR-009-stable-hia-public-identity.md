@@ -1,6 +1,6 @@
 # ADR-009: Stable Hia Public Identity
 
-Status: Proposed (Requirement 002 — pending independent review)
+Status: Accepted (Requirement 002, reviewed at `9e8822b`)
 
 ## Context
 
@@ -22,7 +22,7 @@ People will refer to individual monitor lizards by a short, stable public code (
 
 ## Consequences
 
-Codes are unique and never reused, but not gap-free: a rolled-back insert consumes a sequence value. This is accepted. A 40-goroutine concurrency test asserts no duplicates.
+Codes are unique and never reused, but not gap-free: a rolled-back insert consumes a sequence value. Gaps are accepted; gap-free allocation must not be attempted. Uniqueness and immutability are mandatory and reuse is forbidden. A 40-goroutine concurrency test asserts no duplicates.
 
 ## Exit Strategy
 

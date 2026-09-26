@@ -1,6 +1,6 @@
 # ADR-007: Wildlife Domain Boundaries
 
-Status: Proposed (Requirement 002 — pending independent review)
+Status: Accepted (Requirement 002, reviewed at `9e8822b`)
 
 ## Context
 

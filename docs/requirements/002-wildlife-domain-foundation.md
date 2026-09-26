@@ -1,6 +1,13 @@
 # Requirement 002 — Wildlife Domain Foundation
 
-Status: Implemented on `feature/req-002-wildlife-domain` — **pending independent review. Not accepted. Not merged.**
+Status: **ACCEPTED** — independent review PASS WITH MINOR ISSUES at `9e8822b750169b075f88776680ebb5bd1402cc81`; GitHub Actions `quality` run 36239981201 (pull_request) green; merged to `main` via PR #1 (merge commit `9c788aa8723e5f23c54cc8a58e55fcf1e6ebcf02`, reviewed commit preserved in history).
+
+| Gate | Status |
+| --- | --- |
+| REQ-002 Wildlife Domain Foundation | ACCEPTED |
+| Native local-auth smoke (device/simulator) | NOT RUN — mandatory gate before Requirement 003 |
+| Supabase Auth / Email OTP / real provider JWT | DEFERRED TO INTEGRATION & PILOT HARDENING |
+| Requirement 003 | NOT STARTED — blocked until native local-auth smoke = PASS |
 
 Baseline: accepted Requirement 001 + 001-B at `ea3673bcd848db1de791453f102fe2a5fcb23034`.
 
@@ -100,11 +107,22 @@ Encounter events (`encounter_created`, `encounter_updated`, `encounter_submitted
 | Validation / auth errors | `TestEncounterValidationErrors` |
 | §32/§33 public reads, no hia writes | `TestPublicParkAndHiaReads` |
 
+## Accepted decisions, future requirements, and hardening debt
+
+Recorded at acceptance. None of these required a change to Requirement 002.
+
+1. **Pagination (future requirement).** List endpoints are unpaginated. This is accepted for Requirement 002; pagination must be designed before public pilot or scaled HiaDex usage.
+2. **Hia public code gaps (accepted).** `HIA-xxxxxx` codes come from a database sequence, and a rolled-back insert consumes a value, so gaps are expected.
+   - uniqueness is mandatory
+   - immutability is mandatory
+   - reuse is forbidden
+   - gap-free allocation is not required and must not be attempted
+3. **Migration version tracking (mandatory hardening).** The current idempotent migration runner (no version table) is accepted for local development. Trustworthy migration history/version tracking becomes mandatory before the first shared or deployed persistent database.
+4. **Precise-location write boundary (mandatory hardening).** `encounter_location_point()` is the controlled application/database write boundary for precise coordinates. Privileged arbitrary raw SQL is outside that invariant boundary; production database permissions/access controls must prevent uncontrolled wildlife-location writes.
+5. **Public Hia visibility (accepted for the foundation).** Public Hia reads include every lifecycle status (`PROVISIONAL`, `CONFIRMED`, `INACTIVE`, `ARCHIVED`, `MERGED`) with `status` exposed. HiaDex product visibility rules will be defined later; historical and merged identities must remain resolvable.
+
 ## Known limitations
 
-- `publicCode` values are unique and never reused, but not guaranteed gap-free: a rolled-back insert consumes a sequence value (standard PostgreSQL identity behaviour).
-- Hia listing returns every status (including `MERGED`/`ARCHIVED`) with `status` exposed; the specification does not define public filtering by hia status, so none was invented.
-- List endpoints are unpaginated. Pagination was not specified.
 - Mobile has contract types only; no wildlife screens (Requirement 002 §44).
 - Native local-auth smoke remains **NOT RUN** — deferred mandatory gate before Requirement 003 (see 001-B).
 - Supabase Auth / Email OTP / real provider JWT remain **DEFERRED TO INTEGRATION & PILOT HARDENING**.
