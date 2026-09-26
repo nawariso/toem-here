@@ -11,6 +11,16 @@ import (
 
 const RoleUser = "USER"
 
+// User account statuses, mirrored by the users.status CHECK constraint.
+const (
+	UserStatusActive    = "ACTIVE"
+	UserStatusSuspended = "SUSPENDED"
+	UserStatusDeleted   = "DELETED"
+)
+
+// ErrUserNotActive is returned when a non-ACTIVE user attempts a protected write.
+var ErrUserNotActive = errors.New("only active users may perform this action")
+
 var (
 	ErrInvalidIdentity    = errors.New("invalid external identity")
 	ErrInvalidUsername    = errors.New("username must be 3-30 characters using letters, numbers, or underscore")
@@ -41,8 +51,12 @@ type User struct {
 
 func NewUser(locale string) User {
 	now := time.Now().UTC()
-	return User{ID: uuid.NewString(), Locale: locale, Status: "ACTIVE", CreatedAt: now, UpdatedAt: now, Roles: []string{}}
+	return User{ID: uuid.NewString(), Locale: locale, Status: UserStatusActive, CreatedAt: now, UpdatedAt: now, Roles: []string{}}
 }
+
+// CanWrite reports whether the user may perform protected writes. Only ACTIVE
+// qualifies; SUSPENDED, DELETED, and any unrecognised value are refused.
+func (u User) CanWrite() bool { return u.Status == UserStatusActive }
 func (u User) ProfileComplete() bool {
 	return u.Username != nil && strings.TrimSpace(*u.Username) != "" && u.DisplayName != nil && strings.TrimSpace(*u.DisplayName) != ""
 }

@@ -18,9 +18,20 @@ import (
 	"github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres/migrations"
 )
 
-// Database returns a migrated pool bound to an isolated schema. It skips the
-// test when TEST_DATABASE_URL is absent so unit-only runs stay green.
+// Database returns a fully migrated pool bound to an isolated schema. It
+// skips the test when TEST_DATABASE_URL is absent so unit-only runs stay green.
 func Database(t *testing.T) *pgxpool.Pool {
+	t.Helper()
+	pool := EmptyDatabase(t)
+	if err := migrations.Up(t.Context(), pool); err != nil {
+		t.Fatal(err)
+	}
+	return pool
+}
+
+// EmptyDatabase returns a pool bound to an isolated, unmigrated schema so a
+// test can drive migrations version by version.
+func EmptyDatabase(t *testing.T) *pgxpool.Pool {
 	t.Helper()
 	raw := os.Getenv("TEST_DATABASE_URL")
 	if raw == "" {
@@ -53,9 +64,6 @@ func Database(t *testing.T) *pgxpool.Pool {
 
 	pool, err := pgxpool.NewWithConfig(t.Context(), config)
 	if err != nil {
-		t.Fatal(err)
-	}
-	if err = migrations.Up(t.Context(), pool); err != nil {
 		t.Fatal(err)
 	}
 

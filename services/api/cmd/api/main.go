@@ -48,7 +48,13 @@ func main() {
 	}
 	repo := persistence.NewRepository(pool)
 	users := application.NewUserService(repo)
-	handler := httptransport.NewServer(users, verifier, repo).Handler()
+	parkRepo := persistence.NewParkRepository(pool)
+	wildlife := httptransport.WithWildlife(
+		application.NewParkService(parkRepo),
+		application.NewHiaService(persistence.NewHiaRepository(pool)),
+		application.NewEncounterService(users, parkRepo, persistence.NewEncounterRepository(pool)),
+	)
+	handler := httptransport.NewServer(users, verifier, repo, httptransport.WithLogger(logger), wildlife).Handler()
 	server := &http.Server{Addr: ":" + cfg.HTTPPort, Handler: handler, ReadHeaderTimeout: 5 * time.Second, ReadTimeout: 10 * time.Second, WriteTimeout: 15 * time.Second, IdleTimeout: 60 * time.Second}
 	go func() {
 		logger.Info("api_started", "port", cfg.HTTPPort, "environment", cfg.AppEnv, "auth_mode", cfg.AuthMode)

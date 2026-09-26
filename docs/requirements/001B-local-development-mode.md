@@ -1,6 +1,14 @@
 # Requirement 001-B — Controlled Local Development Mode & External Integration Deferral
 
-Status: Implemented — pending independent review
+Status: ACCEPTED — independent review PASS WITH MINOR ISSUES at `ea3673bcd848db1de791453f102fe2a5fcb23034` (GitHub Actions run 36236034318 green)
+
+| Gate | Status |
+| --- | --- |
+| REQ-001 Core Foundation | ACCEPTED |
+| REQ-001-B Local Development Mode | ACCEPTED |
+| Native local-auth smoke (device/emulator) | NOT RUN — DEFERRED MANDATORY GATE BEFORE REQUIREMENT 003 |
+| Supabase Auth / Email OTP / real provider JWT E2E | DEFERRED TO INTEGRATION & PILOT HARDENING (not tested, not passed) |
+| REQ-002 | UNBLOCKED |
 
 ## Purpose
 
@@ -35,7 +43,8 @@ The Requirement 001 rule "development/test mode must not silently bypass token v
 
 Required configuration:
 
-- `AUTH_MODE=local`: `APP_ENV`, `DATABASE_URL`, `HTTP_PORT` (defaults to 8080), `EXPO_PUBLIC_API_URL`. No Supabase value is read.
+- `AUTH_MODE=local`: `APP_ENV`, `DATABASE_URL`, `EXPO_PUBLIC_API_URL`. No Supabase value is read.
+- `HTTP_PORT` is optional in every mode and keeps the existing Requirement 001 default of `8080` (accepted deviation from the 001-B draft, which listed it as required).
 - `AUTH_MODE=supabase`: additionally `AUTH_ISSUER`, `AUTH_AUDIENCE`, `AUTH_JWKS_URL`, `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. A missing value fails fast.
 
 ## Implementation map
@@ -76,10 +85,18 @@ Launch → Guest Home → Create Your Hia Passport → Continue as Dev User
 
 This does not depend on Supabase, email, or OTP.
 
+Status: **NOT RUN.** It has not passed and must not be described as passed. The independent review reclassified it as a **deferred mandatory gate before Requirement 003**: it must be completed before Camera / Media / device-dependent functionality begins and before any public pilot. It does not block Requirement 002, which is domain/API/PostgreSQL/PostGIS work with no native-device dependency.
+
+## Accepted review debt
+
+- `HTTP_PORT` keeps its `8080` default.
+- The local credential string exists in both Go (`identity/local.go`) and TypeScript (`src/auth/local-dev-adapter.ts`); contract tests keep them aligned. No cross-language generator is to be built.
+- One deterministic development user is sufficient. Role/user switching is not added until a real requirement needs it.
+
 ## Deferred-integration policy (Requirement 001-B §21–§29)
 
 Until Integration & Pilot Hardening, feature requirements prefer local processes, Docker, in-memory/filesystem adapters, and deterministic fixtures over external SaaS. Each deferred provider capability gets a stable application-facing port **when a real requirement needs it** (Replaceable Edge, Not Abstract Everything). Domain code never imports provider SDKs. No speculative ports (`MediaStore`, `NotificationPort`, `MapProvider`) are created by this requirement; later requirements introduce them with their first real use.
 
 ## Non-goals
 
-Real Email OTP, SMTP, Google/Apple/LINE auth, production Supabase configuration, cloud deployment/storage, maps, push notifications, and all wildlife domain work (Requirement 002+).
+Real Email OTP, SMTP, Google/Apple/LINE auth, production Supabase configuration, cloud deployment/storage, maps, push notifications, and all wildlife domain work (delivered separately from Requirement 002 onward).

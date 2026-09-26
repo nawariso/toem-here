@@ -16,11 +16,14 @@ import (
 )
 
 type Server struct {
-	users    application.Users
-	verifier application.IdentityVerifier
-	ready    application.Readiness
-	logger   *slog.Logger
-	mux      *nethttp.ServeMux
+	users      application.Users
+	verifier   application.IdentityVerifier
+	ready      application.Readiness
+	parks      application.Parks
+	hias       application.Hias
+	encounters application.Encounters
+	logger     *slog.Logger
+	mux        *nethttp.ServeMux
 }
 type identityKey struct{}
 type requestIDKey struct{}
@@ -71,6 +74,7 @@ func (s *Server) routes() {
 	s.mux.Handle("POST /v1/auth/bootstrap", s.auth(nethttp.HandlerFunc(s.bootstrap)))
 	s.mux.Handle("GET /v1/users/me", s.auth(nethttp.HandlerFunc(s.me)))
 	s.mux.Handle("PATCH /v1/users/me", s.auth(nethttp.HandlerFunc(s.update)))
+	s.wildlifeRoutes()
 }
 func (s *Server) health(w nethttp.ResponseWriter, _ *nethttp.Request) {
 	writeJSON(w, nethttp.StatusOK, map[string]string{"status": "ok"})

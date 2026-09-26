@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: TOEM HERE API
-  version: 0.1.0
+  version: 0.2.0
 servers:
   - url: http://localhost:8080
 paths:
@@ -46,7 +46,116 @@ paths:
         '400': { $ref: '#/components/responses/Error' }
         '401': { $ref: '#/components/responses/Error' }
         '409': { $ref: '#/components/responses/Error' }
+  /v1/parks:
+    get:
+      security: []
+      summary: List ACTIVE parks
+      responses:
+        '200':
+          description: ACTIVE parks
+          content: { application/json: { schema: { $ref: '#/components/schemas/ParkList' } } }
+  /v1/parks/{id}:
+    get:
+      security: []
+      summary: Get one ACTIVE park
+      parameters: [{ $ref: '#/components/parameters/ParkId' }]
+      responses:
+        '200':
+          description: One ACTIVE park
+          content: { application/json: { schema: { $ref: '#/components/schemas/Park' } } }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/parks/{id}/zones:
+    get:
+      security: []
+      summary: List the ACTIVE zones of an ACTIVE park
+      parameters: [{ $ref: '#/components/parameters/ParkId' }]
+      responses:
+        '200':
+          description: ACTIVE zones of an ACTIVE park
+          content: { application/json: { schema: { $ref: '#/components/schemas/ZoneList' } } }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/hias:
+    get:
+      security: []
+      summary: List hias (read-only; hias are never created through the public API)
+      parameters:
+        - { name: parkId, in: query, required: false, schema: { type: string, format: uuid }, description: Filter by home park }
+      responses:
+        '200':
+          description: Hias ordered by public code
+          content: { application/json: { schema: { $ref: '#/components/schemas/HiaList' } } }
+        '400': { $ref: '#/components/responses/Error' }
+  /v1/hias/{publicCode}:
+    get:
+      security: []
+      summary: Get one hia by its public code
+      parameters:
+        - { name: publicCode, in: path, required: true, schema: { type: string, pattern: '^HIA-[0-9]{6,}$' } }
+      responses:
+        '200':
+          description: One hia
+          content: { application/json: { schema: { $ref: '#/components/schemas/Hia' } } }
+        '404': { $ref: '#/components/responses/Error' }
+  /v1/encounters:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: Create a DRAFT encounter owned by the authenticated ACTIVE user
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/CreateEncounterRequest' } } }
+      responses:
+        '201': { $ref: '#/components/responses/Encounter' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+  /v1/encounters/{id}:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: Read one of the caller's own encounters (other users' encounters are 404)
+      parameters: [{ $ref: '#/components/parameters/EncounterId' }]
+      responses:
+        '200': { $ref: '#/components/responses/Encounter' }
+        '401': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+    patch:
+      security: [{ bearerAuth: [] }]
+      summary: Edit a DRAFT encounter owned by the caller
+      parameters: [{ $ref: '#/components/parameters/EncounterId' }]
+      requestBody:
+        required: true
+        content: { application/json: { schema: { $ref: '#/components/schemas/UpdateEncounterRequest' } } }
+      responses:
+        '200': { $ref: '#/components/responses/Encounter' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /v1/encounters/{id}/submit:
+    post:
+      security: [{ bearerAuth: [] }]
+      summary: DRAFT -> SUBMITTED. Submitting an already SUBMITTED encounter returns it unchanged.
+      parameters: [{ $ref: '#/components/parameters/EncounterId' }]
+      responses:
+        '200': { $ref: '#/components/responses/Encounter' }
+        '400': { $ref: '#/components/responses/Error' }
+        '401': { $ref: '#/components/responses/Error' }
+        '403': { $ref: '#/components/responses/Error' }
+        '404': { $ref: '#/components/responses/Error' }
+        '409': { $ref: '#/components/responses/Error' }
+  /v1/users/me/encounters:
+    get:
+      security: [{ bearerAuth: [] }]
+      summary: The caller's own encounters, newest capturedAt first
+      responses:
+        '200':
+          description: Encounters owned by the caller
+          content: { application/json: { schema: { $ref: '#/components/schemas/EncounterList' } } }
+        '401': { $ref: '#/components/responses/Error' }
 components:
+  parameters:
+    ParkId: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    EncounterId: { name: id, in: path, required: true, schema: { type: string, format: uuid } }
   securitySchemes:
     bearerAuth:
       type: http
@@ -78,7 +187,125 @@ components:
             code: { type: string }
             message: { type: string }
             requestId: { type: string }
+    Park:
+      type: object
+      additionalProperties: false
+      required: [id, slug, name, city, countryCode, timezone]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        city: { type: string }
+        countryCode: { type: string, pattern: '^[A-Z]{2}$' }
+        timezone: { type: string, description: IANA time zone }
+    ParkList:
+      type: object
+      required: [items]
+      properties: { items: { type: array, items: { $ref: '#/components/schemas/Park' } } }
+    Zone:
+      type: object
+      additionalProperties: false
+      required: [id, parkId, slug, name]
+      properties:
+        id: { type: string, format: uuid }
+        parkId: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+    ZoneList:
+      type: object
+      required: [items]
+      properties: { items: { type: array, items: { $ref: '#/components/schemas/Zone' } } }
+    Hia:
+      type: object
+      additionalProperties: false
+      description: The internal UUID is never exposed; publicCode is the stable public identity.
+      required: [publicCode, nickname, status, homeParkId, firstSeenAt, confirmedAt, mergedIntoPublicCode]
+      properties:
+        publicCode: { type: string, pattern: '^HIA-[0-9]{6,}$' }
+        nickname: { type: [string, 'null'] }
+        status: { type: string, enum: [PROVISIONAL, CONFIRMED, INACTIVE, ARCHIVED, MERGED] }
+        homeParkId: { type: [string, 'null'], format: uuid }
+        firstSeenAt: { type: [string, 'null'], format: date-time }
+        confirmedAt: { type: [string, 'null'], format: date-time }
+        mergedIntoPublicCode: { type: [string, 'null'] }
+    HiaList:
+      type: object
+      required: [items]
+      properties: { items: { type: array, items: { $ref: '#/components/schemas/Hia' } } }
+    PlaceRef:
+      type: object
+      additionalProperties: false
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+    EncounterBehavior:
+      type: string
+      enum: [BASKING, SWIMMING, WALKING, RESTING, EATING, CLIMBING, OTHER]
+    Encounter:
+      type: object
+      additionalProperties: false
+      description: >-
+        Encounter response. It deliberately has no location, coordinate,
+        accuracy, observer, or hia field: precise location is private and is
+        never returned, and hia linkage belongs to a future
+        Identification/Verification requirement.
+      required: [id, status, capturedAt, submittedAt, park, zone, behavior, notes, createdAt, updatedAt]
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [DRAFT, SUBMITTED, PROCESSING, NEEDS_REVIEW, CONFIRMED, REJECTED] }
+        capturedAt: { type: string, format: date-time, description: UTC }
+        submittedAt: { type: [string, 'null'], format: date-time }
+        park: { oneOf: [{ $ref: '#/components/schemas/PlaceRef' }, { type: 'null' }] }
+        zone: { oneOf: [{ $ref: '#/components/schemas/PlaceRef' }, { type: 'null' }] }
+        behavior: { oneOf: [{ $ref: '#/components/schemas/EncounterBehavior' }, { type: 'null' }] }
+        notes: { type: [string, 'null'], maxLength: 2000 }
+        createdAt: { type: string, format: date-time }
+        updatedAt: { type: string, format: date-time }
+    EncounterList:
+      type: object
+      required: [items]
+      properties: { items: { type: array, items: { $ref: '#/components/schemas/Encounter' } } }
+    LocationInput:
+      type: object
+      additionalProperties: false
+      description: Write-only precise location (WGS 84). Stored privately; never returned.
+      required: [latitude, longitude, source]
+      properties:
+        latitude: { type: number, minimum: -90, maximum: 90 }
+        longitude: { type: number, minimum: -180, maximum: 180 }
+        accuracyMeters: { type: [number, 'null'], minimum: 0 }
+        source: { type: string, enum: [GPS, MANUAL, IMPORT, UNKNOWN] }
+    CreateEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: The observer is always the authenticated user; observer, status, hia, and timestamps cannot be sent.
+      required: [capturedAt]
+      properties:
+        capturedAt: { type: string, format: date-time }
+        parkId: { type: [string, 'null'], format: uuid }
+        zoneId: { type: [string, 'null'], format: uuid, description: Requires parkId; the zone must belong to that park }
+        behavior: { oneOf: [{ $ref: '#/components/schemas/EncounterBehavior' }, { type: 'null' }] }
+        notes: { type: [string, 'null'], maxLength: 2000 }
+        location: { oneOf: [{ $ref: '#/components/schemas/LocationInput' }, { type: 'null' }] }
+    UpdateEncounterRequest:
+      type: object
+      additionalProperties: false
+      description: >-
+        Partial update of a DRAFT encounter. An absent field is unchanged;
+        null clears parkId, zoneId, behavior, notes, or location. capturedAt
+        cannot be null.
+      properties:
+        capturedAt: { type: string, format: date-time }
+        parkId: { type: [string, 'null'], format: uuid }
+        zoneId: { type: [string, 'null'], format: uuid }
+        behavior: { oneOf: [{ $ref: '#/components/schemas/EncounterBehavior' }, { type: 'null' }] }
+        notes: { type: [string, 'null'], maxLength: 2000 }
+        location: { oneOf: [{ $ref: '#/components/schemas/LocationInput' }, { type: 'null' }] }
   responses:
+    Encounter:
+      description: One encounter owned by the caller (no precise location)
+      content: { application/json: { schema: { $ref: '#/components/schemas/Encounter' } } }
     User:
       description: Current internal TOEM HERE user
       content: { application/json: { schema: { $ref: '#/components/schemas/User' } } }
