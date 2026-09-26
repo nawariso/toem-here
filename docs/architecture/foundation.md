@@ -8,8 +8,8 @@ transport/http -> application -> domain
 infrastructure/identity + infrastructure/persistence
 ```
 
-- Domain: internal user and validation rules; no framework/database/provider imports except UUID generation.
-- Application: use cases and ports (`IdentityVerifier`, `UserRepository`, readiness).
+- Domain: internal user and validation rules; wildlife packages `domain/park`, `domain/hia`, `domain/encounter`, `domain/location` (Requirement 002, ADR-007). No framework/database/provider imports except UUID generation.
+- Application: use cases and ports (`IdentityVerifier`, `UserRepository`, readiness; `ParkRepository`, `HiaRepository`, `EncounterRepository`, `CurrentUserResolver`).
 - Infrastructure: pgx PostgreSQL repository, migrations, Supabase-compatible JWKS verifier, config and telemetry boundary.
 - Transport: routes, Bearer authentication, stable errors, request IDs and structured request logs.
 
@@ -43,5 +43,20 @@ External runtime providers (Supabase Auth/OTP, email, object storage, maps, push
 The mobile app keeps provider details behind `AuthProvider` (`LocalDevAuthProvider` or `SupabaseAuthProvider`, chosen once from `EXPO_PUBLIC_AUTH_MODE`), API access behind `ApiClient`, and navigation policy in a pure state reducer. Supabase session tokens are delegated to Supabase with an Expo SecureStore storage adapter; the local development credential is also kept in SecureStore.
 
 The contracts package is the transport source for OpenAPI and language-neutral JSON shapes. It does not make the Go domain depend on TypeScript.
+
+## Wildlife domain (Requirement 002)
+
+PostgreSQL 18.6 + PostGIS 3.6.4 (ADR-006). Each wildlife module owns its tables. The encounter module resolves the current internal user through `CurrentUserResolver` and never reads `auth_identities`; only `ACTIVE` users may create, edit, or submit.
+
+```text
+parks 1──* zones
+  │          │  (zone_id, park_id) composite FK
+  └──* encounters ──1 encounter_locations   (private; geography(Point,4326); write-only)
+         │
+         └── observer_user_id ──> users
+hias (public_code from an identity sequence; immutable; optional merged_into self-FK)
+```
+
+Encounters have no Hia reference: that relationship belongs to a future Identification/Verification module. Precise location never appears in a response or log (ADR-008). Hia public codes are sequence-backed and immutable (ADR-009).
 
 The telemetry interface is intentionally no-op in Requirement 001; an OpenTelemetry adapter can replace it without changing application/domain code.

@@ -1,19 +1,19 @@
 # TOEM HERE
 
-Requirement 001 foundation (plus Requirement 001-B local development mode) for a community monitor-lizard application. This repository currently contains only the mobile shell, identity/authentication boundary, internal-user API, and PostgreSQL persistence. Wildlife features are intentionally absent.
+Community monitor-lizard application. Requirement 001 (foundation) and 001-B (local development mode) are accepted. Requirement 002 (wildlife domain foundation: parks, zones, Hias, encounters, private encounter locations on PostgreSQL + PostGIS) is implemented on `feature/req-002-wildlife-domain` and **pending independent review**. See `docs/requirements/002-wildlife-domain-foundation.md`.
 
 A fresh clone runs the mobile app, Go API, PostgreSQL, and authentication **without a Supabase account, email provider, OTP, or any cloud account**, using Controlled Local Development Mode (`AUTH_MODE=local`).
 
 > **LOCAL AUTH IS DEVELOPMENT ONLY. IT MUST NEVER BE ENABLED IN PRODUCTION.**
 > `APP_ENV=production` + `AUTH_MODE=local` is a fatal startup error, and release mobile builds refuse local mode.
 
-Status: Requirement 001 core foundation accepted. Supabase Auth / Email OTP / real provider JWT are **DEFERRED TO INTEGRATION & PILOT HARDENING** — not tested end to end. See `docs/requirements/001B-local-development-mode.md`.
+Status: REQ-001 and REQ-001-B accepted. Native local-auth smoke on a device/emulator is **NOT RUN — deferred mandatory gate before Requirement 003**. Supabase Auth / Email OTP / real provider JWT are **DEFERRED TO INTEGRATION & PILOT HARDENING** — not tested end to end. See `docs/requirements/001B-local-development-mode.md`.
 
 ## Architecture and cost
 
 - Expo SDK 57 / React Native 0.86.3 / React 19.2.3 mobile app with Expo Router. Auth goes through an `AuthProvider` adapter: `LocalDevAuthProvider` (development) or `SupabaseAuthProvider` (email OTP, deferred).
 - Go 1.27.1 modular-monolith API. Domain and application layers do not depend on Supabase or pgx.
-- PostgreSQL 18.6 as the system of record, run locally with Docker Compose.
+- PostgreSQL 18.6 + PostGIS 3.6.4 as the system of record, run locally with Docker Compose (`postgis/postgis:18-3.6-alpine`, pinned by digest; the same image runs in CI).
 - API identity goes through `IdentityVerifier`: `LocalDevVerifier` (`AUTH_MODE=local`) or the Supabase JWKS/JWT verifier (`AUTH_MODE=supabase`). Supabase Auth Free Tier remains the selected provider for Integration & Pilot Hardening.
 - Mandatory infrastructure cost: **$0/month**. Local development has no external runtime dependency.
 
@@ -88,17 +88,26 @@ docker compose --env-file .env.local -f infra/docker/compose.yaml ps
 
 Wait until `postgres` is `healthy`.
 
+If you created the volume with the earlier stock `postgres:18.6-alpine` image, the data directory is compatible (same PostgreSQL 18.6); `docker compose ... up -d` recreates the container on the PostGIS image and keeps the data.
+
 ## 4. Run and roll back migrations
 
 From the repository root with `.env.local` loaded:
 
 ```bash
+go run ./services/api/cmd/migrate up          # apply all migrations (currently 000001, 000002)
+go run ./services/api/cmd/migrate down-to 1   # revert only the wildlife migration
 go run ./services/api/cmd/migrate up
-go run ./services/api/cmd/migrate down
-go run ./services/api/cmd/migrate up
+go run ./services/api/cmd/migrate down        # revert everything
 ```
 
-The migration creates `users`, `auth_identities`, and `user_roles`, including foreign keys, `(provider, provider_subject)` uniqueness, and a partial unique index on `lower(username)`.
+There is no version table; every up script is idempotent, so re-running `up` is safe. `000001_identity` creates `users`, `auth_identities`, and `user_roles`. `000002_wildlife` enables PostGIS and creates `parks`, `zones`, `hias`, `encounters`, and the private `encounter_locations` table; its down migration leaves identity data and the PostGIS extension in place.
+
+Load the development reference data (Lumpini Park with Lake Zone, North Path, South Pond; no Hias). It is idempotent and refuses any `APP_ENV` other than `development` or `test`:
+
+```bash
+go run ./services/api/cmd/seed
+```
 
 ## 5. Start the API
 
@@ -119,6 +128,16 @@ Exercise local auth from the terminal (development only):
 
 ```bash
 curl -X POST -H "Authorization: Bearer toem-local-dev.developer-001" http://localhost:8080/v1/auth/bootstrap
+```
+
+Record an encounter as the development user (use a park/zone id from `GET /v1/parks` and `GET /v1/parks/{id}/zones`). The response never contains the location:
+
+```bash
+curl http://localhost:8080/v1/parks
+curl -X POST -H "Authorization: Bearer toem-local-dev.developer-001" -H "Content-Type: application/json" \
+  -d '{"capturedAt":"2026-09-25T07:30:00+07:00","parkId":"<park-id>","zoneId":"<zone-id>","behavior":"BASKING","location":{"latitude":13.73,"longitude":100.54,"accuracyMeters":5,"source":"GPS"}}' \
+  http://localhost:8080/v1/encounters
+curl -X POST -H "Authorization: Bearer toem-local-dev.developer-001" http://localhost:8080/v1/encounters/<encounter-id>/submit
 ```
 
 ## 6. Start the mobile app
@@ -178,7 +197,7 @@ npm audit --audit-level=high
 ./node_modules/.bin/tsc -p ../../packages/contracts/tsconfig.json
 ```
 
-GitHub Actions runs the same gates with a real PostgreSQL 18.6 service and pinned Node/Go versions.
+GitHub Actions runs the same gates with the same pinned PostgreSQL 18.6 + PostGIS 3.6.4 service image and pinned Node/Go versions.
 
 ## API
 
@@ -187,6 +206,9 @@ GitHub Actions runs the same gates with a real PostgreSQL 18.6 service and pinne
 - `POST /v1/auth/bootstrap` (Bearer credential: Supabase JWT, or the local dev credential in `AUTH_MODE=local`)
 - `GET /v1/users/me` (Bearer credential)
 - `PATCH /v1/users/me` (Bearer credential; only `username`, `displayName`, `locale`)
+- `GET /v1/parks`, `GET /v1/parks/{id}`, `GET /v1/parks/{id}/zones` (public; ACTIVE only)
+- `GET /v1/hias[?parkId=]`, `GET /v1/hias/{publicCode}` (public; read-only)
+- `POST /v1/encounters`, `GET|PATCH /v1/encounters/{id}`, `POST /v1/encounters/{id}/submit`, `GET /v1/users/me/encounters` (Bearer credential; owner-only; writes require an `ACTIVE` user)
 
 See `packages/contracts/openapi.yaml`. Errors always use:
 
@@ -202,11 +224,12 @@ See `packages/contracts/openapi.yaml`. Errors always use:
 - JWKS refreshes are throttled and the key cache is TTL-bounded, so unauthenticated callers cannot turn unknown-key-id tokens into unbounded outbound fetches against the identity provider. Signing keys below a 2048-bit RSA modulus are ignored even if the JWKS endpoint offers them. Key rotation is still picked up once the cache expires.
 - Client claims do not authorize internal user IDs or roles.
 - SQL is parameterized and identity creation is one transaction.
-- Logs contain request ID, method, path, status, and duration, but not JWT, OTP, email, credentials, or precise location.
+- Logs contain request ID, method, path, status, and duration, but not JWT, OTP, email, credentials, or precise location. Encounter events log only request ID, encounter ID, user ID, park ID, and status.
+- Precise encounter location is stored in a separate private table and is write-only through the API; responses expose park/zone only (ADR-008). Encounter writes are owner-only, server-derived, and allowed only for `ACTIVE` users.
 - React and React DOM are pinned to Expo SDK 57's supported 19.2.3 baseline. Requirement 001 does not use React Server Components, so `react-server-dom-webpack` is not a direct dependency. React and React DOM have no `expo.install.exclude` exception; `npx expo install --check` validates them normally.
 - `govulncheck` reports **no vulnerabilities**. `pgx` is pinned to v5.9.2 and `golang.org/x/text` to v0.39.0 specifically to clear GO-2026-5004 (SQL injection via dollar-quoted placeholder confusion) and GO-2026-5970.
 - `npm audit --audit-level=high` passes. Thirteen **moderate** advisories remain inside Expo's own build toolchain (`@expo/cli` → `xcode` → `uuid`, and `expo-router` → `query-string` → `decode-uri-component`). `npm audit fix --force` "resolves" them by downgrading to Expo 46 / expo-router 5, which would abandon the SDK 57 baseline, so they are accepted and gated at `high` instead. They affect developer tooling, not the shipped app runtime.
 
 ## Current limits
 
-There is no deployed API/database, production SMTP, Apple/Google/LINE login, account-deletion workflow, or wildlife functionality. Supabase Auth, Email OTP, and real provider JWT verification end to end are **DEFERRED TO INTEGRATION & PILOT HARDENING** and have not been tested against a real project; they are mandatory before any public beta or Lumpini pilot. Account deletion must be designed with future wildlife contribution-retention semantics before public beta or store release.
+There is no deployed API/database, production SMTP, Apple/Google/LINE login, account-deletion workflow, camera/media, Re-ID, maps, notifications, or mobile wildlife screens (the app has Requirement 002 contract types only). Supabase Auth, Email OTP, and real provider JWT verification end to end are **DEFERRED TO INTEGRATION & PILOT HARDENING** and have not been tested against a real project; they are mandatory before any public beta or Lumpini pilot. Account deletion must be designed with future wildlife contribution-retention semantics before public beta or store release.

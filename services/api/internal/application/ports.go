@@ -5,6 +5,10 @@ import (
 	"errors"
 
 	"github.com/nawariso/toem-here/services/api/internal/domain"
+	"github.com/nawariso/toem-here/services/api/internal/domain/encounter"
+	"github.com/nawariso/toem-here/services/api/internal/domain/hia"
+	"github.com/nawariso/toem-here/services/api/internal/domain/location"
+	"github.com/nawariso/toem-here/services/api/internal/domain/park"
 )
 
 var ErrNotFound = errors.New("user not found")
@@ -22,4 +26,71 @@ type Users interface {
 	Bootstrap(context.Context, domain.ExternalIdentity) (domain.User, error)
 	Current(context.Context, domain.ExternalIdentity) (domain.User, error)
 	UpdateProfile(context.Context, domain.ExternalIdentity, domain.ProfilePatch) (domain.User, error)
+}
+
+// CurrentUserResolver is the identity/user boundary the wildlife modules use
+// to turn a verified external identity into the internal user. Wildlife code
+// never reads auth_identities itself.
+type CurrentUserResolver interface {
+	Current(context.Context, domain.ExternalIdentity) (domain.User, error)
+}
+
+// Parks, Hias, and Encounters are the use cases the HTTP transport depends on.
+type Parks interface {
+	ListParks(context.Context) ([]park.Park, error)
+	GetPark(ctx context.Context, id string) (park.Park, error)
+	ListZones(ctx context.Context, parkID string) ([]park.Zone, error)
+}
+type Hias interface {
+	List(ctx context.Context, homeParkID *string) ([]HiaView, error)
+	Get(ctx context.Context, publicCode string) (HiaView, error)
+}
+type Encounters interface {
+	Create(context.Context, domain.ExternalIdentity, CreateEncounterInput) (EncounterView, error)
+	Get(ctx context.Context, identity domain.ExternalIdentity, id string) (EncounterView, error)
+	ListMine(context.Context, domain.ExternalIdentity) ([]EncounterView, error)
+	Update(ctx context.Context, identity domain.ExternalIdentity, id string, patch EncounterPatch) (EncounterView, error)
+	Submit(ctx context.Context, identity domain.ExternalIdentity, id string) (EncounterView, bool, error)
+}
+
+// ParkRepository owns parks and zones.
+type ParkRepository interface {
+	CreatePark(context.Context, park.Park) error
+	CreateZone(context.Context, park.Zone) error
+	ListActiveParks(context.Context) ([]park.Park, error)
+	FindActivePark(ctx context.Context, id string) (park.Park, error)
+	ListActiveZones(ctx context.Context, parkID string) ([]park.Zone, error)
+	// FindParks and FindZones resolve references regardless of status and
+	// omit unknown IDs from the result.
+	FindParks(ctx context.Context, ids []string) (map[string]park.Park, error)
+	FindZones(ctx context.Context, ids []string) (map[string]park.Zone, error)
+}
+
+// HiaRepository owns hias. Create allocates the public code; there is no
+// public create/update API in Requirement 002.
+type HiaRepository interface {
+	Create(context.Context, hia.Hia) (hia.Hia, error)
+	List(ctx context.Context, homeParkID *string) ([]hia.Hia, error)
+	FindByPublicCode(ctx context.Context, code string) (hia.Hia, error)
+	// PublicCodes maps internal hia IDs to public codes, for rendering
+	// merge targets without exposing internal IDs.
+	PublicCodes(ctx context.Context, ids []string) (map[string]string, error)
+}
+
+// LocationChange describes what an encounter edit does to the private
+// location: leave it (Set=false), replace it (Value!=nil), or remove it.
+type LocationChange struct {
+	Set   bool
+	Value *location.Private
+}
+
+// EncounterRepository owns encounters and their private locations.
+type EncounterRepository interface {
+	Create(ctx context.Context, e encounter.Encounter, loc *location.Private) error
+	FindByID(ctx context.Context, id string) (encounter.Encounter, error)
+	ListByObserver(ctx context.Context, observerUserID string) ([]encounter.Encounter, error)
+	// Update locks the encounter row, runs mutate on it, and persists the
+	// result and the location change in one transaction. mutate's error
+	// aborts the transaction.
+	Update(ctx context.Context, id string, mutate func(*encounter.Encounter) (LocationChange, error)) (encounter.Encounter, error)
 }
