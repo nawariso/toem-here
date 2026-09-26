@@ -69,6 +69,7 @@ Retry/idempotency: an existing `encounterId` is reused (no second encounter); af
 ## Technical debt
 
 - No sweeper for files orphaned by a crash between commit and attach.
+- Accepted for the local development adapter: the filesystem publishes the file before metadata is attached transactionally. Application cleanup handles normal attach/database failures, but an ambiguous database commit outcome could theoretically leave file and metadata inconsistent. Before production/shared object storage, design explicit reconciliation or object-state handling appropriate to the chosen storage provider; do not implement distributed transactions or reconciliation here.
 - No `GET` media list/content use in the mobile UI yet (API and contract exist).
 - Local adapter file permissions are POSIX-only; Windows ACLs are inherited.
 - A DRAFT encounter created by a save that is never retried remains a DRAFT.

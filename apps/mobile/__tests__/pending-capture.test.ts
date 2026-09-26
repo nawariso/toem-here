@@ -60,14 +60,18 @@ describe('pending capture store', () => {
     expect(fakeFs.all()).toEqual([capture.photo!.uri]);
   });
 
-  it('a failed move keeps no capture and deletes the camera file', async () => {
-    const { moveFailure } = jest.requireMock('expo-file-system') as { moveFailure: { next: Error | null } };
+  it.each([false, true])('a failed move (partial target: %s) leaves the camera source and no pending file', async (partialTarget) => {
+    const { moveFailure } = jest.requireMock('expo-file-system') as {
+      moveFailure: { next: Error | null; partialTarget: boolean };
+    };
     moveFailure.next = new Error('disk full');
+    moveFailure.partialTarget = partialTarget;
     const store = createPendingCaptureStore();
     const cameraUri = fakeFs.cameraFile();
     await expect(store.keep(cameraUri, 'image/jpeg', CAPTURED_AT)).rejects.toThrow('disk full');
     expect(store.get()).toBeNull();
-    expect(fakeFs.all()).toEqual([]);
+    expect(fakeFs.exists(cameraUri)).toBe(true);
+    expect(fakeFs.all()).toEqual([cameraUri]);
   });
 
   it('notifies subscribers of every change', async () => {

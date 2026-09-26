@@ -92,7 +92,8 @@ export function createPendingCaptureStore(directory: () => Directory = pendingCa
       try {
         await source.move(target);
       } catch (cause) {
-        deleteQuietly(source);
+        // The camera owns the source; never delete the only photo on a failed move.
+        deleteQuietly(target);
         throw cause;
       }
       // The camera cache URI is not used again; only the controlled copy is.

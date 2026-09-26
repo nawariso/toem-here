@@ -129,7 +129,7 @@ export default function Scan() {
     return (
       <View style={styles.screen}>
         <Text style={styles.title}>Encounter saved</Text>
-        <Text style={styles.body}>This Hia is in your Hia Passport. Only you can see the photo.</Text>
+        <Text style={styles.body}>Your encounter is saved in your Hia Passport. Only you can see the photo.</Text>
         <Text style={styles.motto}>{MOTTO}</Text>
         <Pressable style={styles.button} onPress={() => setPhase({ kind: 'idle' })}>
           <Text style={styles.buttonText}>Scan another Hia</Text>

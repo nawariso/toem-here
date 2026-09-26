@@ -19,7 +19,7 @@ function join(parts: Part[]): string {
 }
 
 export const uploadMock = jest.fn();
-export const moveFailure: { next: Error | null } = { next: null };
+export const moveFailure: { next: Error | null; partialTarget: boolean } = { next: null, partialTarget: false };
 
 export class File {
   uri: string;
@@ -36,6 +36,8 @@ export class File {
     if (moveFailure.next) {
       const failure = moveFailure.next;
       moveFailure.next = null;
+      if (moveFailure.partialTarget) files.add(destination.uri);
+      moveFailure.partialTarget = false;
       throw failure;
     }
     if (!files.delete(this.uri)) throw new Error('source does not exist');
@@ -85,5 +87,6 @@ export const fakeFs = {
     directories.clear();
     uploadMock.mockReset();
     moveFailure.next = null;
+    moveFailure.partialTarget = false;
   },
 };

@@ -270,6 +270,19 @@ describe('Scan: camera', () => {
     expect(camera.mounted).toBe(1);
   });
 
+  it('shows capture failure when the pending move fails without deleting the camera source', async () => {
+    const { moveFailure } = jest.requireMock('expo-file-system') as { moveFailure: { next: Error | null } };
+    moveFailure.next = new Error('disk full');
+    const cameraUri = fakeFs.cameraFile('failed-move.jpg');
+    camera.takePictureAsync.mockResolvedValueOnce({ uri: cameraUri, format: 'jpg' });
+    const view = await renderSettled(Scan);
+    await cameraReady();
+    await fireEvent.press(view.getByLabelText('Take photo'));
+    await waitFor(() => expect(view.getByText('Capture failed. Try again.')).toBeTruthy());
+    expect(pendingCapture.get()).toBeNull();
+    expect(fakeFs.all()).toEqual([cameraUri]);
+  });
+
   it('does not mount the camera while the screen is not focused', async () => {
     focus.focused = false;
     await renderSettled(Scan);
@@ -347,6 +360,7 @@ describe('Scan: guest save', () => {
     controller.restore.mockResolvedValue(complete);
     const view = await renderSettled(Scan);
     await waitFor(() => expect(view.getByText('Encounter saved')).toBeTruthy());
+    expect(view.getByText('Your encounter is saved in your Hia Passport. Only you can see the photo.')).toBeTruthy();
     expect(api.createDraftEncounter).toHaveBeenCalledTimes(1);
     expect(api.uploadPhoto).toHaveBeenCalledTimes(1);
     expect(api.submitEncounter).toHaveBeenCalledTimes(1);
