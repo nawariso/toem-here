@@ -1,6 +1,6 @@
 openapi: 3.1.0
 info:
-  title: TOEM HERE API
+  title: TOEM HIA API
   version: 0.2.0
 servers:
   - url: http://localhost:8080
@@ -307,7 +307,7 @@ components:
       description: One encounter owned by the caller (no precise location)
       content: { application/json: { schema: { $ref: '#/components/schemas/Encounter' } } }
     User:
-      description: Current internal TOEM HERE user
+      description: Current internal TOEM HIA user
       content: { application/json: { schema: { $ref: '#/components/schemas/User' } } }
     Error:
       description: Consistent API error

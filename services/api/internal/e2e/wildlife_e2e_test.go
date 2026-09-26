@@ -13,15 +13,15 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/domain"
-	"github.com/nawariso/toem-here/services/api/internal/domain/hia"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/config"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/identity"
-	persistence "github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/seed"
-	"github.com/nawariso/toem-here/services/api/internal/testsupport"
-	httptransport "github.com/nawariso/toem-here/services/api/internal/transport/http"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/hia"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/config"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/identity"
+	persistence "github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/seed"
+	"github.com/nawariso/toem-hia/services/api/internal/testsupport"
+	httptransport "github.com/nawariso/toem-hia/services/api/internal/transport/http"
 )
 
 // Distinctive coordinates and notes, so a leak anywhere is easy to detect.

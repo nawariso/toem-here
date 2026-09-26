@@ -5,9 +5,9 @@ import (
 	"crypto/subtle"
 	"fmt"
 
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/domain"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/config"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/config"
 )
 
 // LOCAL DEVELOPMENT ONLY. MUST NEVER BE ENABLED IN PRODUCTION.
@@ -22,7 +22,7 @@ const LocalDevProvider = "LOCAL_DEV"
 // with AUTH_MODE=local in a development/test environment, and the Supabase JWT
 // verifier rejects it because it is not a signed JWT. The mobile
 // LocalDevAuthProvider sends the same value (apps/mobile/src/auth/local-dev-adapter.ts).
-const LocalDevCredential = "toem-local-dev.developer-001"
+const LocalDevCredential = "toem-hia-local-dev.developer-001"
 
 // LocalDevSubject is the stable subject of the default development user.
 const LocalDevSubject = "developer-001"

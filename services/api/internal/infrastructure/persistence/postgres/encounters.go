@@ -7,9 +7,9 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/domain/encounter"
-	"github.com/nawariso/toem-here/services/api/internal/domain/location"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/encounter"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/location"
 )
 
 // EncounterRepository persists encounters and their private locations

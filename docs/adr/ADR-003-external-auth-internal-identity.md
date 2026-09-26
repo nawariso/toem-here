@@ -3,7 +3,7 @@
 Status: Accepted
 
 ## Context
-Email OTP should launch quickly through Supabase Free Tier, while TOEM HERE users, passports, roles, and future contributions must survive provider changes and added Google, Apple, or LINE identities.
+Email OTP should launch quickly through Supabase Free Tier, while TOEM HIA users, passports, roles, and future contributions must survive provider changes and added Google, Apple, or LINE identities.
 
 ## Decision
 Supabase authenticates email OTP and issues JWTs. Mobile access goes through an AuthProvider adapter and stores sessions in Expo SecureStore. The API verifies asymmetric JWT signatures through JWKS plus issuer, audience, expiry, algorithm, and subject checks behind IdentityVerifier. It maps `(provider, provider_subject)` to a stable internal UUID. User, identity, and USER role creation is atomic.

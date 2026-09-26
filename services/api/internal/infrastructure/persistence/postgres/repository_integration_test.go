@@ -7,11 +7,11 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/domain"
-	persistence "github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres/migrations"
-	"github.com/nawariso/toem-here/services/api/internal/testsupport"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
+	persistence "github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres/migrations"
+	"github.com/nawariso/toem-hia/services/api/internal/testsupport"
 )
 
 func TestMigrationsCreateRollBackAndReapplySchema(t *testing.T) {

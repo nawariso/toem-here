@@ -7,7 +7,7 @@ import (
 	"strconv"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres/migrations"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres/migrations"
 )
 
 const usage = "usage: migrate up | down | down-to <version>"

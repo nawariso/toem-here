@@ -11,8 +11,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/domain"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
 )
 
 type Server struct {

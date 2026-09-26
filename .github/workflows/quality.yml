@@ -13,18 +13,18 @@ jobs:
         # PostgreSQL 18.6 + PostGIS 3.6.4 (stable). Keep identical to infra/docker/compose.yaml.
         image: postgis/postgis:18-3.6-alpine@sha256:ffcf0c4b904e41b9779f8098007fb5a9484025319c18c70cf8e1bcebb742b9b7
         env:
-          POSTGRES_USER: toem_here
+          POSTGRES_USER: toem_hia
           POSTGRES_PASSWORD: ci-only-password
-          POSTGRES_DB: toem_here_test
+          POSTGRES_DB: toem_hia_test
         ports: ["5432:5432"]
         options: >-
-          --health-cmd "pg_isready -U toem_here -d toem_here_test"
+          --health-cmd "pg_isready -U toem_hia -d toem_hia_test"
           --health-interval 5s --health-timeout 5s --health-retries 10
     defaults:
       run:
         working-directory: services/api
     env:
-      TEST_DATABASE_URL: postgres://toem_here:ci-only-password@localhost:5432/toem_here_test?sslmode=disable
+      TEST_DATABASE_URL: postgres://toem_hia:ci-only-password@localhost:5432/toem_hia_test?sslmode=disable
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-go@v6

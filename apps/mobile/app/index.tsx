@@ -13,8 +13,8 @@ export default function Splash() {
 
   return (
     <View style={styles.screen}>
-      <Text style={styles.mark}>TOEM HERE</Text>
-      <Text style={styles.subtitle}>Every Hia has a story.</Text>
+      <Text style={styles.mark}>TOEM HIA</Text>
+      <Text style={styles.subtitle}>Every Hia Has a Story.</Text>
       <ActivityIndicator color="#d96c39" style={styles.loader} />
     </View>
   );

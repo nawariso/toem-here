@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/nawariso/toem-here/services/api/internal/domain"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
 )
 
 var ErrInvalidToken = errors.New("invalid identity token")

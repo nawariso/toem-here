@@ -10,8 +10,8 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	persistence "github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/seed"
+	persistence "github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/seed"
 )
 
 func main() {

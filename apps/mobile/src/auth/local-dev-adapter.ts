@@ -7,9 +7,9 @@ import type { AuthProvider } from './controller';
 // API's LocalDevVerifier (services/api/internal/infrastructure/identity/local.go)
 // resolves it to an external identity, and the normal bootstrap flow maps that
 // to the internal User. The credential has no authority on a Supabase-mode API.
-export const LOCAL_DEV_CREDENTIAL = 'toem-local-dev.developer-001';
+export const LOCAL_DEV_CREDENTIAL = 'toem-hia-local-dev.developer-001';
 
-const SESSION_KEY = 'toem-here.local-dev-session';
+const SESSION_KEY = 'toem-hia.local-dev-session';
 const OTP_UNAVAILABLE = 'Email OTP is unavailable in local development mode';
 
 export type SessionStorage = {

@@ -5,10 +5,10 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/config"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/config"
 )
 
-const databaseURL = "postgres://user:s3cret-value@localhost:5432/toem_here?sslmode=disable"
+const databaseURL = "postgres://user:s3cret-value@localhost:5432/toem_hia?sslmode=disable"
 
 var supabaseSettings = map[string]string{
 	"AUTH_ISSUER":   "https://project.supabase.co/auth/v1",
