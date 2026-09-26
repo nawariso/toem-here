@@ -1,4 +1,4 @@
-module github.com/nawariso/toem-here/services/api
+module github.com/nawariso/toem-hia/services/api
 
 go 1.27.1
 

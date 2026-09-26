@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nawariso/toem-here/services/api/internal/domain/location"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/location"
 )
 
 func acc(v float64) *float64 { return &v }

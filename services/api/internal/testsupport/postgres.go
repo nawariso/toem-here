@@ -15,7 +15,7 @@ import (
 	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres/migrations"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres/migrations"
 )
 
 // Database returns a fully migrated pool bound to an isolated schema. It

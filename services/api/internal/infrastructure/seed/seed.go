@@ -7,7 +7,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/nawariso/toem-here/services/api/internal/domain/park"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/park"
 )
 
 // ErrForbiddenEnvironment is returned for any APP_ENV outside the allowlist.

@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/nawariso/toem-here/services/api/internal/domain"
-	"github.com/nawariso/toem-here/services/api/internal/domain/encounter"
-	"github.com/nawariso/toem-here/services/api/internal/domain/hia"
-	"github.com/nawariso/toem-here/services/api/internal/domain/location"
-	"github.com/nawariso/toem-here/services/api/internal/domain/park"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/encounter"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/hia"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/location"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/park"
 )
 
 var (

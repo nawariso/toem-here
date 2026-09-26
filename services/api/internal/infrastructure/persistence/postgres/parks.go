@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nawariso/toem-here/services/api/internal/domain/park"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/park"
 )
 
 // ParkRepository persists parks and zones (Park module tables only).

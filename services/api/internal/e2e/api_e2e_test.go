@@ -14,11 +14,11 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/identity"
-	persistence "github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres"
-	"github.com/nawariso/toem-here/services/api/internal/testsupport"
-	httptransport "github.com/nawariso/toem-here/services/api/internal/transport/http"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/identity"
+	persistence "github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres"
+	"github.com/nawariso/toem-hia/services/api/internal/testsupport"
+	httptransport "github.com/nawariso/toem-hia/services/api/internal/transport/http"
 )
 
 const (

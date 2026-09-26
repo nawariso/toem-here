@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/domain"
-	httptransport "github.com/nawariso/toem-here/services/api/internal/transport/http"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
+	httptransport "github.com/nawariso/toem-hia/services/api/internal/transport/http"
 )
 
 type verifier struct{ reject bool }

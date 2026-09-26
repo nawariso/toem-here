@@ -3,7 +3,7 @@
 Status: Accepted
 
 ## Context
-TOEM HERE needs clear domain boundaries but has one small team, one API, and no demonstrated need for distributed deployment.
+TOEM HIA needs clear domain boundaries but has one small team, one API, and no demonstrated need for distributed deployment.
 
 ## Decision
 Build one Go process arranged as domain, application ports/use cases, infrastructure adapters, and HTTP transport. Dependencies point inward. Identity and persistence are interfaces at the application boundary.

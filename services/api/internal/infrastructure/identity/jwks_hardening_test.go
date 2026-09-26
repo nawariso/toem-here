@@ -14,7 +14,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/identity"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/identity"
 )
 
 // countingJWKS serves the given keys and records how many times it was fetched.

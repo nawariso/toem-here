@@ -7,7 +7,7 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nawariso/toem-here/services/api/internal/domain/hia"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/hia"
 )
 
 // HiaRepository persists hias (Hia module table only).

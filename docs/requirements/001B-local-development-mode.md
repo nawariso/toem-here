@@ -60,7 +60,7 @@ Required configuration:
 | "Continue as Dev User" UI | `apps/mobile/app/passport.tsx` |
 | Decision record | `docs/adr/ADR-005-controlled-local-development-adapters.md` |
 
-Local identity: provider `LOCAL_DEV`, subject `developer-001`, no email. The credential is the deterministic, non-sensitive string `toem-local-dev.developer-001`. The Supabase verifier rejects it.
+Local identity: provider `LOCAL_DEV`, subject `developer-001`, no email. The credential is the deterministic, non-sensitive string `toem-hia-local-dev.developer-001`. The Supabase verifier rejects it.
 
 ## Test map
 

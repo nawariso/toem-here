@@ -17,7 +17,7 @@ function memoryStorage(): SessionStorage & { values: Map<string, string> } {
 describe('LocalDevAuthProvider', () => {
   it('matches the backend development credential and is identified as local', () => {
     // Must equal identity.LocalDevCredential in services/api/internal/infrastructure/identity/local.go.
-    expect(LOCAL_DEV_CREDENTIAL).toBe('toem-local-dev.developer-001');
+    expect(LOCAL_DEV_CREDENTIAL).toBe('toem-hia-local-dev.developer-001');
     expect(createLocalDevAuthProvider(memoryStorage()).kind).toBe('local');
   });
 
@@ -38,7 +38,7 @@ describe('LocalDevAuthProvider', () => {
 
   it('ignores tampered stored values instead of forwarding them', async () => {
     const storage = memoryStorage();
-    await storage.setItem('toem-here.local-dev-session', 'user-id-00000000');
+    await storage.setItem('toem-hia.local-dev-session', 'user-id-00000000');
     await expect(createLocalDevAuthProvider(storage).getAccessToken()).resolves.toBeNull();
   });
 

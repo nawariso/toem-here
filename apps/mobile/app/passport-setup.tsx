@@ -30,7 +30,7 @@ export default function PassportSetup() {
   return (
     <View style={styles.screen}>
       <Text style={styles.title}>Set up your passport</Text>
-      <Text style={styles.body}>Choose how the TOEM HERE community will know you.</Text>
+      <Text style={styles.body}>Choose how the TOEM HIA community will know you.</Text>
       <Text style={styles.label}>USERNAME</Text>
       <TextInput
         style={styles.input}

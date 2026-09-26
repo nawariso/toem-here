@@ -4,8 +4,8 @@ import (
 	"errors"
 	"testing"
 
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/config"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/identity"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/config"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/identity"
 )
 
 func localConfig(appEnv string) config.Config {
@@ -33,9 +33,9 @@ func TestLocalDevVerifierResolvesDeterministicIdentity(t *testing.T) {
 func TestLocalDevVerifierRejectsAnythingElse(t *testing.T) {
 	v, _ := identity.NewLocalDevVerifier(config.EnvTest)
 	for _, raw := range []string{
-		"", " ", "developer-001", "toem-local-dev.developer-002",
+		"", " ", "developer-001", "toem-hia-local-dev.developer-002",
 		identity.LocalDevCredential + " ", " " + identity.LocalDevCredential,
-		"TOEM-LOCAL-DEV.DEVELOPER-001", `{"userId":"00000000-0000-0000-0000-000000000000"}`,
+		"TOEM-HIA-LOCAL-DEV.DEVELOPER-001", `{"userId":"00000000-0000-0000-0000-000000000000"}`,
 	} {
 		if _, err := v.Verify(t.Context(), raw); !errors.Is(err, identity.ErrInvalidToken) {
 			t.Fatalf("credential %q must be rejected, got %v", raw, err)

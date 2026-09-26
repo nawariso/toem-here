@@ -4,12 +4,12 @@ import (
 	"net/http"
 	"testing"
 
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/config"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/identity"
-	persistence "github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres"
-	"github.com/nawariso/toem-here/services/api/internal/testsupport"
-	httptransport "github.com/nawariso/toem-here/services/api/internal/transport/http"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/config"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/identity"
+	persistence "github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres"
+	"github.com/nawariso/toem-hia/services/api/internal/testsupport"
+	httptransport "github.com/nawariso/toem-hia/services/api/internal/transport/http"
 )
 
 // newLocalStack wires the real HTTP server, application service, and
@@ -85,7 +85,7 @@ func TestLocalAuthDoesNotTrustClientSuppliedIdentity(t *testing.T) {
 	for name, token := range map[string]string{
 		"missing":         "",
 		"subject_only":    identity.LocalDevSubject,
-		"other_developer": "toem-local-dev.developer-002",
+		"other_developer": "toem-hia-local-dev.developer-002",
 		"user_id":         first["id"].(string),
 		"garbage":         "not-a-credential",
 	} {

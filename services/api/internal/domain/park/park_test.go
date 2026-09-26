@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/nawariso/toem-here/services/api/internal/domain/park"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/park"
 )
 
 var now = time.Date(2026, 9, 26, 10, 0, 0, 0, time.UTC)

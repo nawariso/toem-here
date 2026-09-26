@@ -138,7 +138,7 @@ afterAll(() => {
 describe('guest state', () => {
   it('sends a launching app with no session from Splash to Home', async () => {
     const view = await renderScreen(Splash);
-    expect(view.getByText('TOEM HERE')).toBeTruthy();
+    expect(view.getByText('TOEM HIA')).toBeTruthy();
     await waitFor(() => expect(replace).toHaveBeenCalledWith('/home'));
   });
 

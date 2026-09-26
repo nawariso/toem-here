@@ -3,7 +3,7 @@ package domain_test
 import (
 	"testing"
 
-	"github.com/nawariso/toem-here/services/api/internal/domain"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
 )
 
 // Requirement 002 amendment 5: only ACTIVE users may perform protected writes.

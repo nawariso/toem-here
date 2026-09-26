@@ -13,7 +13,7 @@ Status: CORE FOUNDATION ACCEPTED — external auth integration DEFERRED
 
 ## Objective
 
-Build the first reproducible technical foundation for TOEM HERE: monorepo structure, Expo mobile shell, Go modular-monolith API, PostgreSQL, internal user identity, Supabase email OTP authentication, security/observability baseline, tests, CI, ADRs, and developer documentation. Do not implement wildlife/Hia domain features.
+Build the first reproducible technical foundation for TOEM HIA: monorepo structure, Expo mobile shell, Go modular-monolith API, PostgreSQL, internal user identity, Supabase email OTP authentication, security/observability baseline, tests, CI, ADRs, and developer documentation. Do not implement wildlife/Hia domain features.
 
 Principles: small start, mandatory infrastructure cost $0/month, stable/GA/LTS dependencies only, replaceable external providers, prove before scale.
 

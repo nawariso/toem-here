@@ -8,12 +8,12 @@ import (
 	nethttp "net/http"
 	"time"
 
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/domain"
-	"github.com/nawariso/toem-here/services/api/internal/domain/encounter"
-	"github.com/nawariso/toem-here/services/api/internal/domain/hia"
-	"github.com/nawariso/toem-here/services/api/internal/domain/location"
-	"github.com/nawariso/toem-here/services/api/internal/domain/park"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/encounter"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/hia"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/location"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/park"
 )
 
 // WithWildlife enables the Requirement 002 park, hia, and encounter routes.

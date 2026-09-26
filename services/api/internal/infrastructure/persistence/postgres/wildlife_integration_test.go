@@ -10,16 +10,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/nawariso/toem-here/services/api/internal/application"
-	"github.com/nawariso/toem-here/services/api/internal/domain"
-	"github.com/nawariso/toem-here/services/api/internal/domain/encounter"
-	"github.com/nawariso/toem-here/services/api/internal/domain/hia"
-	"github.com/nawariso/toem-here/services/api/internal/domain/location"
-	"github.com/nawariso/toem-here/services/api/internal/domain/park"
-	persistence "github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/persistence/postgres/migrations"
-	"github.com/nawariso/toem-here/services/api/internal/infrastructure/seed"
-	"github.com/nawariso/toem-here/services/api/internal/testsupport"
+	"github.com/nawariso/toem-hia/services/api/internal/application"
+	"github.com/nawariso/toem-hia/services/api/internal/domain"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/encounter"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/hia"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/location"
+	"github.com/nawariso/toem-hia/services/api/internal/domain/park"
+	persistence "github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/persistence/postgres/migrations"
+	"github.com/nawariso/toem-hia/services/api/internal/infrastructure/seed"
+	"github.com/nawariso/toem-hia/services/api/internal/testsupport"
 )
 
 func ptr[T any](v T) *T { return &v }

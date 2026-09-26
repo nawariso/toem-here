@@ -1,4 +1,4 @@
-# TOEM HERE
+# TOEM HIA
 
 Community monitor-lizard application. Requirement 001 (foundation) and 001-B (local development mode) are accepted. Requirement 002 (wildlife domain foundation: parks, zones, Hias, encounters, private encounter locations on PostgreSQL + PostGIS) is **accepted** and merged. See `docs/requirements/002-wildlife-domain-foundation.md`.
 
@@ -19,6 +19,22 @@ Status: REQ-001, REQ-001-B and REQ-002 accepted. Native local-auth smoke on a de
 
 See `docs/architecture/foundation.md` and `docs/adr/`.
 
+## Naming
+
+| Concept | Canonical value |
+| --- | --- |
+| Product name | `TOEM HIA` (normal English form `Toem Hia`) |
+| Thai brand | `เติมเหี้ย` |
+| Tagline | `Every Hia Has a Story.` |
+| Animal/community noun | `Hia` (plural `Hias`; technical noun `hia`) |
+| Public animal code | `HIA-000001` |
+| Product slug / repository | `toem-hia` / `github.com/nawariso/toem-hia` |
+| Go module | `github.com/nawariso/toem-hia/services/api` |
+| Mobile | package `@toem-hia/mobile`, Expo slug `toem-hia`, scheme `toemhia`, bundle/package `com.toemhia.mobile` |
+| Local database | Compose project `toem-hia`, user/database `toem_hia`, volume `toem_hia_postgres` |
+
+The previous name is legacy; Git history is intentionally not rewritten. If you have a local Docker volume from the previous name, it is not reused or deleted automatically — the `toem-hia` Compose project starts a fresh database (run migrations and the seed). Remove the old volume yourself once you no longer need it.
+
 ## Prerequisites
 
 Install stable versions:
@@ -36,8 +52,8 @@ Pinned product versions are in `services/api/go.mod`, `apps/mobile/package.json`
 ## 1. Clone and configure
 
 ```bash
-git clone https://github.com/nawariso/toem-here.git
-cd toem-here
+git clone https://github.com/nawariso/toem-hia.git
+cd toem-hia
 cp .env.example .env.local
 ```
 
@@ -71,7 +87,7 @@ In the free Supabase project:
 3. Authentication → Signing Keys: use an asymmetric signing key (RS256 for this baseline). The API deliberately accepts RS256 only.
 4. Use the dashboard's built-in email sender for development. Its rate limits are acceptable for this requirement; configure custom SMTP only when justified later.
 
-The mobile app calls `signInWithOtp` and then `verifyOtp(type: "email")`. It sends the resulting access JWT to the API; TOEM HERE never receives or stores a password.
+The mobile app calls `signInWithOtp` and then `verifyOtp(type: "email")`. It sends the resulting access JWT to the API; TOEM HIA never receives or stores a password.
 
 ## 3. Start PostgreSQL
 
@@ -127,17 +143,17 @@ Both return HTTP 200 when the process and database are healthy. Startup fails im
 Exercise local auth from the terminal (development only):
 
 ```bash
-curl -X POST -H "Authorization: Bearer toem-local-dev.developer-001" http://localhost:8080/v1/auth/bootstrap
+curl -X POST -H "Authorization: Bearer toem-hia-local-dev.developer-001" http://localhost:8080/v1/auth/bootstrap
 ```
 
 Record an encounter as the development user (use a park/zone id from `GET /v1/parks` and `GET /v1/parks/{id}/zones`). The response never contains the location:
 
 ```bash
 curl http://localhost:8080/v1/parks
-curl -X POST -H "Authorization: Bearer toem-local-dev.developer-001" -H "Content-Type: application/json" \
+curl -X POST -H "Authorization: Bearer toem-hia-local-dev.developer-001" -H "Content-Type: application/json" \
   -d '{"capturedAt":"2026-09-25T07:30:00+07:00","parkId":"<park-id>","zoneId":"<zone-id>","behavior":"BASKING","location":{"latitude":13.73,"longitude":100.54,"accuracyMeters":5,"source":"GPS"}}' \
   http://localhost:8080/v1/encounters
-curl -X POST -H "Authorization: Bearer toem-local-dev.developer-001" http://localhost:8080/v1/encounters/<encounter-id>/submit
+curl -X POST -H "Authorization: Bearer toem-hia-local-dev.developer-001" http://localhost:8080/v1/encounters/<encounter-id>/submit
 ```
 
 ## 6. Start the mobile app
